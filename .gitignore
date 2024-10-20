@@ -1,0 +1,10 @@
+NetWork/.idea
+NetWork/build
+NetWork/.vscode
+NetWork/cmake-build-debug
+DS_AG/build
+DS_AG/.vscode
+DS_AG/.idea
+DS_AG/cmake-build-debug
+QT/.idea
+QT/cmake-build-debug

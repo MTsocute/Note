@@ -1,5 +1,4 @@
 #include "include/algraph.h"
-#include "../../../../../Library/Developer/CommandLineTools/SDKs/MacOSX15.0.sdk/usr/include/c++/v1/tuple"
 
 void directG3() {
     vector<std::tuple<int, int, int>>  directed_edges = {
@@ -17,6 +16,5 @@ void directG3() {
 
 int main() {
     directG3();
-
     return 0;
 }

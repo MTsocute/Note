@@ -2,7 +2,7 @@
 #define ALGRAPH_H
 #define INFIN INT_MAX
 
-#include "../include/stdc++.h"
+#include <bits/stdc++.h>
 
 using namespace std;
 

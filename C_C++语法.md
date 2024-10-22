@@ -340,6 +340,12 @@ else cout << "dynamic_cast 对非多态类型转换失败" << endl;
 delete nonPolymorphic;
 ```
 
+### 2.5 有元函数
+
+```c++
+
+```
+
 
 
 ## 3. 设计模式

@@ -21,4 +21,3 @@ add_executable(algraph
     include/stdc++.h
     include/algraph.h
 )
-

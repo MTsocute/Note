@@ -342,8 +342,38 @@ delete nonPolymorphic;
 
 ### 2.5 有元函数
 
-```c++
+> 友元函数可以访问类中的私有数据和方法，这样可以在不暴露这些成员的情况下提供特定功能。
 
+```c++
+class MyClass; // 前向声明
+
+class FriendClass {
+public:
+    void display(MyClass &obj); // 声明友元函数
+};
+
+class MyClass {
+private:
+    int value;
+
+public:
+    MyClass(int val) : value(val) {}
+
+    // 声明 FriendClass 为友元
+    friend class FriendClass; 
+};
+
+void FriendClass::display(MyClass &obj) {
+    cout << "MyClass 的私有值: " << obj.value << endl; // 访问私有成员
+}
+
+int main() {
+    MyClass myObj(42);
+    FriendClass friendObj;
+    friendObj.display(myObj); // 调用友元函数
+
+    return 0;
+}
 ```
 
 

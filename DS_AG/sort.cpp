@@ -1,7 +1,8 @@
-#include <bits/stdc++.h>
+// #include <bits/stdc++.h>
+#include "include/stdc++.h"
+
 constexpr static int MAXHEAP_MODE = 0;
 constexpr static int MIN_HEAP_MODE = 1;
-
 
 using namespace std;
 
@@ -39,7 +40,37 @@ public:
         }
     }
 
+    template<class T>
+    void mergeSort(vector<T> & arr, int low, int high) {
+        int mid = low + (high - low) / 2;
+        mergeSort(arr, low, mid);
+        mergeSort(arr, mid + 1, high);
+
+        merge(arr, low, mid, high);
+    }
+
+
 private:
+    template<class T>
+    void merge(vector<T> & arr, const int low, const int high) {
+            vector<T> temp;
+            for (const auto & e : arr) temp.emplace_back(e);
+
+            const int mid = low + (high - low) / 2;
+
+            int k = low;
+            int i = low;
+            int j = mid + 1;
+
+            while (i <= mid && j <= high) {
+                if (temp[low] <= temp[j]) arr[k++] = temp[i++];
+                else arr[k++] = temp[j++];
+            }
+
+            while (i <= mid) { arr[k++] = temp[i++]; }
+            while (j <= high) { arr[k++] = temp[j++]; }
+    }
+
     template<class T>
     int my_partition(vector<T> &arr, int low, int high) {
         int randomIndex = std::rand() % (high - low + 1) + low;
@@ -86,16 +117,19 @@ private:
             this->heapAdjust(arr, k, arr.size());
     }
 
+    // merge
+
 };
 
 int main() {
     std::srand(static_cast<unsigned int>(std::time(nullptr))); // 设置随机种子
-
     vector<int> v = {19, 3, 2, 44, 5, 6, 7, 8, 9, 10};
 
     SortLib demo;
 
-    // demo.quickSort(v, 0, static_cast<int>(v.size() - 1)); // 确保使用 static_cast 转换为 int
+    // demo.quickSort(v, 0, v.size() - 1); // 确保使用 static_cast 转换为 int
+
+    // demo.heapSort(v);
 
     demo.heapSort(v);
 

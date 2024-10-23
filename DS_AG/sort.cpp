@@ -60,7 +60,7 @@ private:
 
     // 第二个参数是决定调整的范围的，非常重要
     template<class T>
-    void heapAdjust(vector<T> & arr, int k, int heapSize) {
+    void heapAdjust(vector<T> & arr, int k, const int heapSize) {
         T k_val = arr[k];
         // 如果需要调整就一直下坠
         // 从当前节点的左孩子往下走
@@ -85,7 +85,7 @@ private:
         for (int k = arr.size() / 2 - 1; k >= 0; --k)
             this->heapAdjust(arr, k, arr.size());
     }
-    
+
 };
 
 int main() {

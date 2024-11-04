@@ -162,6 +162,67 @@ const_cast 之后修改值: 20
 通过函数修改 const 参数: 30
 ```
 
+### ==1.4 typdef + c  函数指针==
+
+---
+
+> 说实话真的不知道，C 语言也存在函数指针，C ++ 还是太便利了
+
+> 函数指针的声明
+
+```C++
+/*
+	int -> 返回类型
+	func_ptr -> 指针名字
+	(int, int) -> 包含的参数
+*/
+int (*func_ptr)(int, int);
+```
+
+> 基本使用
+
+```c
+int add(int a, int b) { return a + b; }
+
+int main() {
+    // 声明并初始化函数指针
+    int (*func_ptr)(int, int) = add;
+
+    // 使用函数指针调用函数
+    int result = func_ptr(3, 4);
+    printf("Result: %d\n", result);  // 输出：Result: 7
+
+    return 0;
+}
+```
+
+> **使用 typdef 申明某一类函数指针，作为函数的参数使用，实现函数编程**
+>
+> `typedef int (*Operation)(int, int);`
+>
+> `int(*) (int, int) -> Operation`，如果是 C++ 的话就是：`using Operation = int(*)(int, int);`
+
+```C
+typedef int (*Operation)(int, int);
+
+const int add(int a, int b) { return a + b; }
+
+const int multiply(int a, int b) { return a * b; }
+
+// 使用函数指针类型作为参数
+void operate(int x, int y, Operation op) {
+    printf("Result: %d\n", op(x, y));
+}
+
+int main() {
+    operate(5, 3, add);       // 输出 Result: 8
+    operate(5, 3, multiply);  // 输出 Result: 15
+    return 0;
+}
+```
+
+
+
 
 
 ## 2. 类
@@ -609,5 +670,72 @@ public:
 private:
 	log() = default;
 };
+```
+
+## Ex. CmakeList 编写
+
+---
+
+> 如果使用的环境是 `Clion` 或者 正在苦恼于 `makefile` 的冗杂的话，试试看使用 `CMakeLists.txt` 来管理你的程序吧
+
+<br>
+
+### ==1.  CmakeLists + vkpkg 导入第三方库的正确用法==
+
+> - `target_lin_libraries`：这个是针对某一个文件链接对应的 `include` 文件
+> - `include_directories`：这个是整个文件都链接对应的 `include` 文件路径
+
+```cmake
+cmake_minimum_required(VERSION 3.11)
+
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 11)
+
+project(RC)
+
+# 查找 Eigen3 库
+find_package(Eigen3 CONFIG REQUIRED)
+
+# 对文件所有的可执行文件导入 include
+#include_directories("D:\\vkpkg\\installed\\x64-mingw-dynamic\\include")
+
+# 添加可执行文件
+add_executable(${PROJECT_NAME} rotation_cube.cc)
+add_executable(${PROJECT_NAME}_DONUT rotation_donut.cc)
+
+
+if (Eigen3_FOUND)
+    message(STATUS "Eigen3 Include Directories: ${EIGEN3_INCLUDE_DIRS}")
+    
+    # 单一文件对应导入 include 的写法
+    add_executable(${PROJECT_NAME}_EIGEN rotation_cube_eigen.cc)
+    # PRIVATE 的意思，如果有文件导入我们当前的文件，那么不可以通过这个文件来使用它导入的文件的函数功能
+    target_link_libraries(${PROJECT_NAME}_EIGEN PRIVATE Eigen3::Eigen)
+
+    add_executable(my_demo eigen_demo.cc)
+    target_link_libraries(my_demo PRIVATE Eigen3::Eigen)
+else ()
+    message(FATAL_ERROR "Eigen3 library not found. Please install it or check the path.")
+endif ()
+```
+
+### 2.  根据不同的 OS 来设置 
+
+```cmake
+cmake_minimum_required(VERSION 3.11)
+
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 11)
+
+project(OS)
+
+# 根据操作系统设置
+if (WIN32)
+    message(STATUS "Configuring for Windows")
+elseif (APPLE)
+    message(STATUS "Configuring for macOS")
+else ()
+    message(STATUS "Configuring for other OS")
+endif ()
 ```
 

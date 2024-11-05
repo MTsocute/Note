@@ -34,3 +34,4 @@ C51_Board/led_monitor/lib/README
 C51_Board/led_monitor/platformio.ini
 C51_Board/led_monitor/test/README
 *.xml
+cc_geometry/

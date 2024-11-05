@@ -686,13 +686,6 @@ private:
 > - `include_directories`：这个是整个文件都链接对应的 `include` 文件路径
 
 ```cmake
-cmake_minimum_required(VERSION 3.11)
-
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_STANDARD 11)
-
-project(RC)
-
 # 查找 Eigen3 库
 find_package(Eigen3 CONFIG REQUIRED)
 
@@ -702,7 +695,6 @@ find_package(Eigen3 CONFIG REQUIRED)
 # 添加可执行文件
 add_executable(${PROJECT_NAME} rotation_cube.cc)
 add_executable(${PROJECT_NAME}_DONUT rotation_donut.cc)
-
 
 if (Eigen3_FOUND)
     message(STATUS "Eigen3 Include Directories: ${EIGEN3_INCLUDE_DIRS}")

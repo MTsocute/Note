@@ -14,4 +14,28 @@ QT/cmake-build-debug
 .idea/modules.xml
 .idea/vcs.xml
 .idea/workspace.xml
+<<<<<<< HEAD
 .idea
+=======
+C51_Board/led_board/.idea/encodings.xml
+C51_Board/led_board/.idea/misc.xml
+C51_Board/led_board/.idea/vcs.xml
+C51_Board/led_board/include/README
+C51_Board/led_board/lib/README
+C51_Board/led_board/platformio.ini
+C51_Board/led_board/test/README
+C51_Board/led_light/.idea/misc.xml
+C51_Board/led_light/.idea/vcs.xml
+C51_Board/led_light/include/README
+C51_Board/led_light/lib/README
+C51_Board/led_light/platformio.ini
+C51_Board/led_light/test/README
+C51_Board/led_monitor/.idea/misc.xml
+C51_Board/led_monitor/.idea/vcs.xml
+C51_Board/led_monitor/include/README
+C51_Board/led_monitor/lib/README
+C51_Board/led_monitor/platformio.ini
+C51_Board/led_monitor/test/README
+*.xml
+cc_geometry/
+>>>>>>> 1d79e64e25e6f7dea1d6db9aa9dd18fd41262eaf

@@ -4,8 +4,8 @@ project(DS_AG)
 set(CMAKE_CXX_STANDARD 20)
 
 add_executable(DS_AG
-    sort.cpp
-    include/stdc++.h
+        sort.cpp
+        ./include/stdc++.h
 )
 
 add_executable(mgraph

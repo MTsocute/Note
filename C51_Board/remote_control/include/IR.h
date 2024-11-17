@@ -8,6 +8,7 @@
 #include "mcs51/8052.h"
 #include "Timer0.h"
 #include "Int0.h"
+#include <stdint.h>
 #include "LCD1602.h"
 
 #define IR_POWER        0x45
@@ -33,20 +34,6 @@
 #define IR_9            0x4A
 
 
-static unsigned int IR_Time;
-static unsigned char IR_State;
-
-///* 这个数组是一个 unsigned char 所以是 32 bit，每一个位置存储一个地址 */
-static unsigned char IR_Data[4];
-static unsigned char IR_pData;
-
-static unsigned char IR_DataFlag;       // 完成数据接受的标志
-static unsigned char IR_RepeatFlag;     // 遇到的是 Repeat 段
-
-static unsigned char IR_Address;        // 一帧红外中的地址
-static unsigned char IR_Command;        // 一阵红外中的指令
-
-
 /**
   * @brief  红外遥控初始化
   * @param  无
@@ -55,31 +42,29 @@ static unsigned char IR_Command;        // 一阵红外中的指令
 void IR_Init(void);
 
 /**
-  * @brief  红外遥控获取收到数据帧标志位
+  * @brief  放在外部中断函数中，实现接受红外数据
   * @param  无
-  * @retval 是否收到数据帧，1为收到，0为未收到
+  * @retval 无
   */
-unsigned char IR_GetDataFlag(void);
+void IR_Main(void);
 
 /**
-  * @brief  红外遥控获取收到连发帧标志位
+  * @brief  放在外部中断函数中，实现接受红外数据
   * @param  无
-  * @retval 是否收到连发帧，1为收到，0为未收到
+  * @retval 无
   */
-unsigned char IR_GetRepeatFlag(void);
+uint8_t IR_GetAddress();
 
 /**
-  * @brief  红外遥控获取收到的地址数据
+  * @brief  放在外部中断函数中，实现接受红外数据
   * @param  无
-  * @retval 收到的地址数据
+  * @retval 无
   */
-unsigned char IR_GetAddress(void);
+uint8_t IR_GetCommand();
 
-/**
-  * @brief  红外遥控获取收到的命令数据
-  * @param  无
-  * @retval 收到的命令数据
-  */
-unsigned char IR_GetCommand(void);
+uint8_t IR_Get_DataFlag();
+
+uint8_t IR_Get_RepeatFlag();
+
 
 #endif //REMOTE_CONTROL_IR_H

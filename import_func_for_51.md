@@ -23,14 +23,34 @@ void Timer0_Init(void)		//1毫秒@12.000MHz
     EA = 1;
     PT0 = 0;
 }
+
+void Timer1_Init(void)        //1毫秒@12.000MHz
+{
+    TMOD &= 0x0F;			//设置定时器模式
+    TL1 = 0x20;				//设置定时初始值
+    TH1 = 0xD1;				//设置定时初始值
+    TF1 = 0;				//清除TF1标志
+    TR1 = 1;				//定时器1开始计时
+
+    ET1 = 1;
+    EA = 1;
+    PT1 = 0;
+}
 ```
 
 > 中断执行
 
 ````c++
-void time0() __interrupt(TF0_VECTOR) {
+void time0() __interrupt(1) {
     TL0 = 0x18;				// 设置定时初始值
 	TH0 = 0xFC;				// 设置定时初始值
+}
+
+
+
+void Timer1_Routine() __interrupt(3) {
+    TL1 = 0x20;				//设置定时初始值
+    TH1 = 0xD1;				//设置定时初始值
 }
 ````
 

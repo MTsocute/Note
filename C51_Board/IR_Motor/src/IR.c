@@ -4,28 +4,21 @@
 
 #include "IR.h"
 
-
-unsigned int IR_Time;
-unsigned char IR_State;
-
-///* 这个数组是一个 unsigned char 所以是 32 bit，每一个位置存储一个地址 */
-unsigned char IR_Data[4];
-unsigned char IR_pData;
-
-unsigned char IR_DataFlag;       // 完成数据接受的标志
-unsigned char IR_RepeatFlag;     // 遇到的是 Repeat 段
-
-unsigned char IR_Address;        // 一帧红外中的地址
-unsigned char IR_Command;        // 一阵红外中的指令
-
-
 void IR_Init(void) {
     Timer0_Init();
     Int0_Init();
 }
 
-void IR_Main(void) {
-    if (IR_State == 0)                //状态0，空闲状态
+unsigned char IR_GetAddress(void) {
+    return IR_Address;
+}
+
+unsigned char IR_GetCommand(void) {
+    return IR_Command;
+}
+
+void demo() {
+    if (IR_State == 0)                   // 状态0，空闲状态
     {
         Timer0_SetCounter(0);    //定时计数器清0
         Timer0_Run(1);            //定时器启动
@@ -77,28 +70,4 @@ void IR_Main(void) {
             IR_State = 0;            //置状态为0
         }
     }
-}
-
-uint8_t IR_GetAddress() {
-    return IR_Address;
-}
-
-uint8_t IR_GetCommand() {
-    return IR_Command;
-}
-
-uint8_t IR_Get_DataFlag() {
-    if (IR_DataFlag == 1)  {
-        IR_DataFlag = 0;
-        return 1;
-    }
-    return 0;
-}
-
-uint8_t IR_Get_RepeatFlag() {
-    if (IR_RepeatFlag == 1)  {
-         IR_RepeatFlag = 0;
-        return 1;
-    }
-    return 0;
 }

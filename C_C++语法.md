@@ -681,7 +681,7 @@ private:
 };
 ```
 
-## Ex. CmakeList 编写
+## Ex. CMakeLists 编写
 
 ---
 
@@ -691,19 +691,14 @@ private:
 
 ### ==1.  CmakeLists + vkpkg 导入第三方库的正确用法==
 
-> - `target_lin_libraries`：这个是针对某一个文件链接对应的 `include` 文件
-> - `include_directories`：这个是整个文件都链接对应的 `include` 文件路径
+> - `target_link_libraries`：这个是针对**第三方库头文件**对应的 `include` 路径
 
 ```cmake
 # 查找 Eigen3 库
 find_package(Eigen3 CONFIG REQUIRED)
 
-# 对文件所有的可执行文件导入 include
-#include_directories("D:\\vkpkg\\installed\\x64-mingw-dynamic\\include")
-
 # 添加可执行文件
 add_executable(${PROJECT_NAME} rotation_cube.cc)
-add_executable(${PROJECT_NAME}_DONUT rotation_donut.cc)
 
 if (Eigen3_FOUND)
     message(STATUS "Eigen3 Include Directories: ${EIGEN3_INCLUDE_DIRS}")
@@ -712,15 +707,51 @@ if (Eigen3_FOUND)
     add_executable(${PROJECT_NAME}_EIGEN rotation_cube_eigen.cc)
     # PRIVATE 的意思，如果有文件导入我们当前的文件，那么不可以通过这个文件来使用它导入的文件的函数功能
     target_link_libraries(${PROJECT_NAME}_EIGEN PRIVATE Eigen3::Eigen)
-
-    add_executable(my_demo eigen_demo.cc)
-    target_link_libraries(my_demo PRIVATE Eigen3::Eigen)
+    
 else ()
     message(FATAL_ERROR "Eigen3 library not found. Please install it or check the path.")
 endif ()
 ```
 
-### 2.  根据不同的 OS 来设置 
+> - `include_directories`：这个是针对**自定义头文件**链对应的 `include` 路径
+>
+> `file-tree`：
+>
+> ```shell
+> .
+> ├── CMakeLists.txt
+> ├── cmake-build-debug
+> ├── include (我们自己写的头文件)
+> └── src
+> ```
+
+```cmake
+find_package(Qt6 COMPONENTS
+        Core
+        Gui
+        Widgets
+        REQUIRED)
+
+add_executable(First_Demo src/main.cpp
+        src/window_demo.cpp
+        src/window_demo.ui
+        include/window_demo.h
+)
+
+# 导入自己写的头文件库
+target_include_directories(First_Demo
+        PRIVATE "D:\\Code\\QT\\First_Demo\\include"
+)
+
+# 导入第三方库
+target_link_libraries(First_Demo
+        Qt::Core
+        Qt::Gui
+        Qt::Widgets
+)
+```
+
+### 2. 根据不同的 OS 来设置 
 
 ```cmake
 cmake_minimum_required(VERSION 3.11)

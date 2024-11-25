@@ -15,9 +15,6 @@ find_package(Qt6 COMPONENTS
         REQUIRED)
 
 add_executable(First_Demo src/main.cpp
-        src/window_demo.cpp
-        src/window_demo.ui
-        include/window_demo.h
         src/widget_demo.cpp
         include/widget_demo.h
         src/widget_demo.ui

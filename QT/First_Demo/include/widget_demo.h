@@ -6,6 +6,8 @@
 #define FIRST_DEMO_WIDGET_DEMO_H
 
 #include <QWidget>
+#include <QProcess>
+#include <QMessageBox>
 
 
 QT_BEGIN_NAMESPACE
@@ -22,6 +24,11 @@ public:
 
 private:
     Ui::widget_demo *ui;
+
+private slots:
+    void click_on_commit_button1();
+    void click_on_commit_button2();
+    void click_on_cancel_button();
 };
 
 

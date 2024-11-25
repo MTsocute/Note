@@ -1,5 +1,6 @@
 D:/Code/QT/First_Demo/cmake-build-debug/First_Demo_autogen/6YEA5652QU/moc_widget_demo.cpp: D:/Code/QT/First_Demo/include/widget_demo.h \
   D:/Code/QT/First_Demo/cmake-build-debug/First_Demo_autogen/moc_predefs.h \
+  D:/App/QT/6.8.0/mingw_64/include/QtCore/QProcess \
   D:/App/QT/6.8.0/mingw_64/include/QtCore/q20functional.h \
   D:/App/QT/6.8.0/mingw_64/include/QtCore/q20iterator.h \
   D:/App/QT/6.8.0/mingw_64/include/QtCore/q20memory.h \
@@ -45,6 +46,7 @@ D:/Code/QT/First_Demo/cmake-build-debug/First_Demo_autogen/6YEA5652QU/moc_widget
   D:/App/QT/6.8.0/mingw_64/include/QtCore/qglobalstatic.h \
   D:/App/QT/6.8.0/mingw_64/include/QtCore/qhash.h \
   D:/App/QT/6.8.0/mingw_64/include/QtCore/qhashfunctions.h \
+  D:/App/QT/6.8.0/mingw_64/include/QtCore/qiodevice.h \
   D:/App/QT/6.8.0/mingw_64/include/QtCore/qiodevicebase.h \
   D:/App/QT/6.8.0/mingw_64/include/QtCore/qiterable.h \
   D:/App/QT/6.8.0/mingw_64/include/QtCore/qiterator.h \
@@ -68,6 +70,7 @@ D:/Code/QT/First_Demo/cmake-build-debug/First_Demo_autogen/6YEA5652QU/moc_widget
   D:/App/QT/6.8.0/mingw_64/include/QtCore/qoverload.h \
   D:/App/QT/6.8.0/mingw_64/include/QtCore/qpair.h \
   D:/App/QT/6.8.0/mingw_64/include/QtCore/qpoint.h \
+  D:/App/QT/6.8.0/mingw_64/include/QtCore/qprocess.h \
   D:/App/QT/6.8.0/mingw_64/include/QtCore/qprocessordetection.h \
   D:/App/QT/6.8.0/mingw_64/include/QtCore/qrect.h \
   D:/App/QT/6.8.0/mingw_64/include/QtCore/qrefcount.h \
@@ -145,7 +148,11 @@ D:/Code/QT/First_Demo/cmake-build-debug/First_Demo_autogen/6YEA5652QU/moc_widget
   D:/App/QT/6.8.0/mingw_64/include/QtGui/qtransform.h \
   D:/App/QT/6.8.0/mingw_64/include/QtGui/qwindowdefs.h \
   D:/App/QT/6.8.0/mingw_64/include/QtGui/qwindowdefs_win.h \
+  D:/App/QT/6.8.0/mingw_64/include/QtWidgets/QMessageBox \
   D:/App/QT/6.8.0/mingw_64/include/QtWidgets/QWidget \
+  D:/App/QT/6.8.0/mingw_64/include/QtWidgets/qdialog.h \
+  D:/App/QT/6.8.0/mingw_64/include/QtWidgets/qdialogbuttonbox.h \
+  D:/App/QT/6.8.0/mingw_64/include/QtWidgets/qmessagebox.h \
   D:/App/QT/6.8.0/mingw_64/include/QtWidgets/qsizepolicy.h \
   D:/App/QT/6.8.0/mingw_64/include/QtWidgets/qtwidgets-config.h \
   D:/App/QT/6.8.0/mingw_64/include/QtWidgets/qtwidgetsexports.h \

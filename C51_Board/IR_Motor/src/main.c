@@ -22,8 +22,8 @@ int main() {
 
         if (d1) {
             LCD_ClearRegion(2, 1, 16);
-
-            if (IR_Command == IR_VOL_ADD && SPEED < 3) SPEED++;
+            if (IR_Command == IR_POWER) { SPEED = 0; }
+            else if (IR_Command == IR_VOL_ADD && SPEED < 3) SPEED++;
             else if (IR_Command == IR_VOL_MINUS && SPEED > 0) SPEED--;
         }
 

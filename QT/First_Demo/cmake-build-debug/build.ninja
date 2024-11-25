@@ -65,14 +65,6 @@ build CMakeFiles/First_Demo.dir/src/main.cpp.obj: CXX_COMPILER__First_Demo_unsca
   OBJECT_DIR = CMakeFiles\First_Demo.dir
   OBJECT_FILE_DIR = CMakeFiles\First_Demo.dir\src
 
-build CMakeFiles/First_Demo.dir/src/window_demo.cpp.obj: CXX_COMPILER__First_Demo_unscanned_Debug D$:/Code/QT/First_Demo/src/window_demo.cpp || cmake_object_order_depends_target_First_Demo
-  DEFINES = -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64
-  DEP_FILE = CMakeFiles\First_Demo.dir\src\window_demo.cpp.obj.d
-  FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  INCLUDES = -ID:/Code/QT/First_Demo/include -isystem D:/Code/QT/First_Demo/cmake-build-debug/First_Demo_autogen/include -isystem D:/App/QT/6.8.0/mingw_64/include/QtCore -isystem D:/App/QT/6.8.0/mingw_64/include -isystem D:/App/QT/6.8.0/mingw_64/mkspecs/win32-g++ -isystem D:/App/QT/6.8.0/mingw_64/include/QtGui -isystem D:/App/QT/6.8.0/mingw_64/include/QtWidgets
-  OBJECT_DIR = CMakeFiles\First_Demo.dir
-  OBJECT_FILE_DIR = CMakeFiles\First_Demo.dir\src
-
 build CMakeFiles/First_Demo.dir/src/widget_demo.cpp.obj: CXX_COMPILER__First_Demo_unscanned_Debug D$:/Code/QT/First_Demo/src/widget_demo.cpp || cmake_object_order_depends_target_First_Demo
   DEFINES = -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64
   DEP_FILE = CMakeFiles\First_Demo.dir\src\widget_demo.cpp.obj.d
@@ -89,7 +81,7 @@ build CMakeFiles/First_Demo.dir/src/widget_demo.cpp.obj: CXX_COMPILER__First_Dem
 #############################################
 # Link the executable First_Demo.exe
 
-build First_Demo.exe: CXX_EXECUTABLE_LINKER__First_Demo_Debug CMakeFiles/First_Demo.dir/First_Demo_autogen/mocs_compilation.cpp.obj CMakeFiles/First_Demo.dir/src/main.cpp.obj CMakeFiles/First_Demo.dir/src/window_demo.cpp.obj CMakeFiles/First_Demo.dir/src/widget_demo.cpp.obj | D$:/App/QT/6.8.0/mingw_64/lib/libQt6Widgets.a D$:/App/QT/6.8.0/mingw_64/lib/libQt6Gui.a D$:/App/QT/6.8.0/mingw_64/lib/libQt6Core.a || First_Demo_autogen First_Demo_autogen_timestamp_deps
+build First_Demo.exe: CXX_EXECUTABLE_LINKER__First_Demo_Debug CMakeFiles/First_Demo.dir/First_Demo_autogen/mocs_compilation.cpp.obj CMakeFiles/First_Demo.dir/src/main.cpp.obj CMakeFiles/First_Demo.dir/src/widget_demo.cpp.obj | D$:/App/QT/6.8.0/mingw_64/lib/libQt6Widgets.a D$:/App/QT/6.8.0/mingw_64/lib/libQt6Gui.a D$:/App/QT/6.8.0/mingw_64/lib/libQt6Core.a || First_Demo_autogen First_Demo_autogen_timestamp_deps
   FLAGS = -g
   LINK_LIBRARIES = D:/App/QT/6.8.0/mingw_64/lib/libQt6Widgets.a  D:/App/QT/6.8.0/mingw_64/lib/libQt6Gui.a  D:/App/QT/6.8.0/mingw_64/lib/libQt6Core.a  -lmpr  -luserenv  -ld3d11  -ldxgi  -ldxguid  -ld3d12  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\First_Demo.dir
@@ -132,7 +124,7 @@ build First_Demo_autogen_timestamp_deps: phony CMakeFiles/First_Demo_autogen_tim
 #############################################
 # Utility command for First_Demo_autogen
 
-build First_Demo_autogen: phony CMakeFiles/First_Demo_autogen First_Demo_autogen/include/src/ui_window_demo.h First_Demo_autogen/include/src/ui_widget_demo.h First_Demo_autogen/timestamp First_Demo_autogen/mocs_compilation.cpp First_Demo_autogen_timestamp_deps
+build First_Demo_autogen: phony CMakeFiles/First_Demo_autogen First_Demo_autogen/include/src/ui_widget_demo.h First_Demo_autogen/timestamp First_Demo_autogen/mocs_compilation.cpp First_Demo_autogen_timestamp_deps
 
 
 #############################################
@@ -148,13 +140,13 @@ build First_Demo_autogen/timestamp First_Demo_autogen/mocs_compilation.cpp | ${c
 #############################################
 # Phony custom command for CMakeFiles\First_Demo_autogen_timestamp_deps
 
-build CMakeFiles/First_Demo_autogen_timestamp_deps | ${cmake_ninja_workdir}CMakeFiles/First_Demo_autogen_timestamp_deps: phony D$:/App/QT/6.8.0/mingw_64/lib/libQt6Gui.a D$:/App/QT/6.8.0/mingw_64/bin/moc.exe D$:/App/QT/6.8.0/mingw_64/lib/libQt6Core.a D$:/App/QT/6.8.0/mingw_64/bin/uic.exe D$:/App/QT/6.8.0/mingw_64/lib/libQt6Widgets.a
+build CMakeFiles/First_Demo_autogen_timestamp_deps | ${cmake_ninja_workdir}CMakeFiles/First_Demo_autogen_timestamp_deps: phony D$:/App/QT/6.8.0/mingw_64/lib/libQt6Gui.a D$:/App/QT/6.8.0/mingw_64/lib/libQt6Core.a D$:/App/QT/6.8.0/mingw_64/bin/moc.exe D$:/App/QT/6.8.0/mingw_64/lib/libQt6Widgets.a D$:/App/QT/6.8.0/mingw_64/bin/uic.exe
 
 
 #############################################
 # Phony custom command for CMakeFiles\First_Demo_autogen
 
-build CMakeFiles/First_Demo_autogen First_Demo_autogen/include/src/ui_window_demo.h First_Demo_autogen/include/src/ui_widget_demo.h | ${cmake_ninja_workdir}CMakeFiles/First_Demo_autogen ${cmake_ninja_workdir}First_Demo_autogen/include/src/ui_window_demo.h ${cmake_ninja_workdir}First_Demo_autogen/include/src/ui_widget_demo.h: phony First_Demo_autogen/timestamp || First_Demo_autogen_timestamp_deps
+build CMakeFiles/First_Demo_autogen First_Demo_autogen/include/src/ui_widget_demo.h | ${cmake_ninja_workdir}CMakeFiles/First_Demo_autogen ${cmake_ninja_workdir}First_Demo_autogen/include/src/ui_widget_demo.h: phony First_Demo_autogen/timestamp || First_Demo_autogen_timestamp_deps
 
 # =============================================================================
 # Target aliases.

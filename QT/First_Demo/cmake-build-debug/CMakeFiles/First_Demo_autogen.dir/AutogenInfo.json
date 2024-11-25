@@ -231,12 +231,6 @@
 			"MU",
 			"6YEA5652QU/moc_widget_demo.cpp",
 			null
-		],
-		[
-			"D:/Code/QT/First_Demo/include/window_demo.h",
-			"MU",
-			"6YEA5652QU/moc_window_demo.cpp",
-			null
 		]
 	],
 	"HEADER_EXTENSIONS" : [ "h", "hh", "h++", "hm", "hpp", "hxx", "in", "txx" ],
@@ -312,8 +306,7 @@
 	"SOURCES" : 
 	[
 		[ "D:/Code/QT/First_Demo/src/main.cpp", "MU", null ],
-		[ "D:/Code/QT/First_Demo/src/widget_demo.cpp", "MU", null ],
-		[ "D:/Code/QT/First_Demo/src/window_demo.cpp", "MU", null ]
+		[ "D:/Code/QT/First_Demo/src/widget_demo.cpp", "MU", null ]
 	],
 	"UIC_OPTIONS" : [],
 	"UIC_SEARCH_PATHS" : [],

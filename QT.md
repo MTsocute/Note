@@ -99,7 +99,7 @@ void widget_demo::click_on_commit_button() {
 }
 ```
 
-### 2.3 connect 的 lambda 写法
+### 2.3 `connect()` 的 lambda 写法
 
 ```c++
 // 其实还可以还可以直接写一个 lambda 函数

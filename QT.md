@@ -26,6 +26,28 @@
 
 ![QMainWindow](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241125130826368.png)
 
+### 1.2 如何给窗口设置标题
+
+> 在 `widget`  继承的类中，我们在对应的构造函数实现我们对窗口的一些基础属性的设置
+
+```c++
+calculator::calculator(QWidget *parent) :
+        QWidget(parent), ui(new Ui::calculator) {
+    ui->setupUi(this);
+
+    // 固定窗口的最大最小尺寸（不可以拖拉改变大小）
+    this->setMaximumSize(520, 570);
+    this->setMinimumSize(520, 570);
+
+    // 显示的窗口名字
+    this->setWindowTitle("计算器");
+
+    // 连接槽函
+    connect(ui->oneButton, &QPushButton::clicked,
+            this, &calculator::click_on_oneButton);
+}
+```
+
 
 
 ## 2. 信号和槽
@@ -107,5 +129,42 @@ connect(ui->brosewButton, &QPushButton::clicked,
         // 对的，我们其实可以直接 lambda 一步走，不再需要 this 了
         [this]() { QMessageBox::information(this, "Information", "Click to Browse"); }
    );
+```
+
+## 3. LineEdit
+
+### 3.1 `LineEdit` 显示输出
+
+```cpp 
+// 你可以使用 ui 命名空间去找到 你在 UI 界面创建的类的名字
+
+// 我们的数据
+ui->displayLine->setText(expression);	// displayLine 就是我们的 LineEdit
+```
+
+## 4. PushButton
+
+### 4.1 `PushButton `点击改变背景色
+
+
+
+## Ex. 环境配置
+
+### 1. CMakeLists.txt 配置编译的路径
+
+```cmake
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+
+# 这个用于追踪我们需要的路径
+set(CMAKE_PREFIX_PATH "D:/App/QT/6.8.0/mingw_64/lib/cmake")
+
+find_package(Qt6 COMPONENTS
+        Core
+        Gui
+        Widgets
+        REQUIRED)
 ```
 

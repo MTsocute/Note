@@ -771,3 +771,120 @@ else ()
 endif ()
 ```
 
+### 3. 在 C++ 环境中使用 Python
+
+```cmake
+# 找到 Python3
+find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+
+# Python3 支持
+add_executable(python_demo python_in_cpp.cpp)
+target_link_libraries(python_demo Python3::Python)
+```
+
+> 简单的使用 Python 的程序
+
+```cpp
+#include <Python.h>
+#include <iostream>
+
+int main() {
+    // 初始化 Python 解释器
+    Py_Initialize();
+
+    // 执行一些简单的 Python 代码
+    const char* code = "print('Hello from Python!')";
+    
+    // 运行 Python 代码
+    PyRun_SimpleString(code);
+
+    // 终止 Python 解释器
+    Py_Finalize();
+
+    return 0;
+}
+```
+
+> ### 在一个 C++ 使用 Python3 写好的程序并使用获取对应的返回值结果
+
+- py 文件中的内容
+
+```python
+# cal.py
+import os
+import sys
+
+def say_hello(something=""):
+    return 114514
+```
+
+- 在 CPP 中调用 py 文件的函数并获取对应的返回值
+
+```cpp
+#include <Python.h>
+#include <iostream>
+
+int main() {
+    // 初始化 Python 解释器
+    Py_Initialize();
+
+    // 检查 Python 是否初始化成功
+    if (!Py_IsInitialized()) {
+        std::cerr << "Python 初始化失败！" << std::endl;
+        return -1;
+    }
+
+    try {
+        // 动态添加路径到 sys.path
+        std::string customPath = "D:/Code/QT/Calculator/script/";
+        std::string pythonCode = "import sys; sys.path.append('" + customPath + "')";
+        PyRun_SimpleString(pythonCode.c_str());
+
+        // 导入 Python 模块 (cal.py)
+        PyObject* pModule = PyImport_ImportModule("cal");
+        if (!pModule) {
+            std::cerr << "Unable to load 'cal'" << std::endl;
+            PyErr_Print(); // 打印 Python 错误信息
+            return -1;
+        }
+
+        // 获取 say_hello 函数
+        PyObject* pFunc = PyObject_GetAttrString(pModule, "say_hello");
+        if (!pFunc || !PyCallable_Check(pFunc)) {
+            std::cerr << "'say_hello' 函数不可用或不可调用" << std::endl;
+            Py_XDECREF(pModule);
+            return -1;
+        }
+
+        std::string expr = "1 + 1";
+        // 构造参数
+        PyObject* pArgs = PyTuple_Pack(1, PyUnicode_FromString(expr.c_str()));
+
+        // 调用函数，并获取返回值
+        PyObject* pValue = PyObject_CallObject(pFunc, pArgs);
+
+        // 检查返回值并获取结果
+        if (pValue != nullptr) {
+            long result = PyLong_AsLong(pValue);
+            std::cout << "结果: " << result << std::endl;
+            Py_DECREF(pValue);
+        } else {
+            std::cerr << "函数调用失败！" << std::endl;
+            PyErr_Print(); // 打印 Python 错误信息
+        }
+
+        // 释放资源
+        Py_XDECREF(pArgs);
+        Py_XDECREF(pFunc);
+        Py_XDECREF(pModule);
+
+    } catch (...) {
+        std::cerr << "发生异常！" << std::endl;
+    }
+
+    // 关闭 Python 解释器
+    Py_Finalize();
+    return 0;
+}
+```
+

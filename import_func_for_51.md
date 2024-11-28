@@ -628,5 +628,51 @@ unsigned char AT24_ReadByte(unit8_t Word_Addr) {
 }
 ```
 
-## 9.  
+## 9.  红外线模块的实现
 
+
+
+## 10. 超声波测距模块
+
+---
+
+### 10.1 测距原理
+
+> 原理
+
+![动图](https://pic1.zhimg.com/v2-4531511ce54ac2a86f2addf57987bbb8_b.webp)
+
+> 时序图
+>
+> 也就是这个输出的回响信号的高电平的时间就是我们检测到的距离
+>
+> 只要我们发射了一个脉冲信号之后，我们就把 `ECHO` 标记为高电平，等到再一次接收信号，我们就标记为 0 
+>
+> 然后这个时间就是一来一回的时间，所以我们的测距公式应该为：$d = \frac{v_{声速}\times t}{2}$ 
+
+![img](https://pic3.zhimg.com/v2-a1ba078021ba77de5704f8c62ef2c720_1440w.jpg)
+
+### 10.2 具体代码实现
+
+> 初始化
+
+```c
+```
+
+## 11. 延迟函数
+
+> 毫秒级延迟函数
+
+```c
+void Delay_X_ms(unsigned char xms)	//@12.000MHz
+{
+	unsigned char i, j;
+
+    while (xms --) {
+        i = 2; j = 239;
+        do { while (--j); } while (--i);   
+    }
+}
+```
+
+> 微秒级延迟函数

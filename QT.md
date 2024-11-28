@@ -144,13 +144,16 @@ ui->displayLine->setText(expression);	// displayLine 就是我们的 LineEdit
 
 ## 4. PushButton
 
-### 4.1 `PushButton `点击改变背景色
+### 4.1 `PushButton `改变背景色
+
+```cpp 
+```
 
 
 
 ## Ex. 环境配置
 
-### 1. CMakeLists.txt 配置编译的路径
+### 1. CMakeLists.txt 配置 QT 编译的路径
 
 ```cmake
 set(CMAKE_CXX_STANDARD 20)

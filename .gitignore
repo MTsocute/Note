@@ -5,3 +5,4 @@
 /QT/First_Demo/cmake-build-debug
 QT/First_Demo/cmake-build-debug/Testing/Temporary/LastTest.log
 QT/Calculator/script/__pycache__/cal.cpython-313.pyc
+*.pyc

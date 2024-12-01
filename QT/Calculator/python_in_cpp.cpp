@@ -47,7 +47,7 @@ int main() {
             return -1;
         }
 
-        std::string expr = "4 * 2";
+        const std::string expr = "4 * 2.6";
         // 构造参数
         PyObject* pArgs = PyTuple_Pack(1, PyUnicode_FromString(expr.c_str()));
 

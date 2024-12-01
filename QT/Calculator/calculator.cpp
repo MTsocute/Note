@@ -113,7 +113,7 @@ double use_pycal(const std::string & Expr) {
 
     // 检查 Python 是否初始化成功
     if (!Py_IsInitialized()) {
-        std::cerr << "Python 初始化失败！" << std::endl;
+        std::cerr << "Python Init Failed！" << std::endl;
     }
 
     try {
@@ -142,7 +142,7 @@ double use_pycal(const std::string & Expr) {
 
         // 检查返回值并获取结果
         if (pValue != nullptr) {
-            result = PyFloat_AS_DOUBLE(pValue);
+            result = PyFloat_AsDouble(pValue);
             std::cout << "Result: " << result << std::endl;
             Py_DECREF(pValue);
         }
@@ -155,7 +155,6 @@ double use_pycal(const std::string & Expr) {
         Py_XDECREF(pArgs);
         Py_XDECREF(pFunc);
         Py_XDECREF(pModule);
-
     }
 
     catch (...) {

@@ -232,6 +232,28 @@ int main() {
 | `<<`   | 左移     | / | 将所有位向左移动指定的位数，右边补 `0`，相当于乘以 `2^n`。   |
 | `>>`   | 右移     | / | 将所有位向右移动指定的位数，有符号数会保留符号位，无符号数左边补 `0`，相当于除以 `2^n`。 |
 
+### 1.6 `std::cerr`
+
+> 这个和 `std::cout` 很像，但是不一样的是，他们虽然是输出内容，但是代表的是错误的输出，所以一般显示的都是 $\textcolor{red}{红色}$ 的
+
+```cpp
+void error_handling(const std::string &message) {
+    // std::cerr 内容的输出
+    std::cerr << message << std::endl;
+    std::exit(1);
+}
+```
+
+> C 语言的话也可以实现一样的方法
+
+```cpp
+void error_handling(char *message) {
+    fputs(message, stderr);
+    fputc('\n', stderr);
+    exit(1);
+}
+```
+
 <br>
 
 ## 2. 类
@@ -681,6 +703,122 @@ private:
 };
 ```
 
+## 4. 文件操作
+
+---
+
+### 4.1 `open` 函数
+
+> `open` 函数的文件状态描述
+
+![image-20241130162353315](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/uPic/image-20241130162353315.png)
+
+> 当然这个在 C++ 中有更好的写法，所以后面我们会再优化
+
+```cpp
+// 创建一个文件，有什么要求就看上面的表
+fd = open("data.txt", O_CREAT | O_WRONLY | O_TRUNC);
+```
+
+### 4.2 C++ 17 `filesystem` 库
+
+> 这个头文件对一些常规的文件处理更加的好用，所以在这里回有很大的介绍
+>
+> 这里我们默认你做了这些基础的配置
+
+```cpp
+#include <filesystem>
+#include <fstream>		// 文件操作的类
+
+namespace fs = std::filesystem;		// 简化命名空间
+```
+
+
+
+#### 4.2.1 CPP 读写文件的操作
+
+> ### 读文件的操作
+>
+> 这个 `is_open()` 不需要文件是否存在与否，保证文件能够正常打开就行
+
+```cpp
+std::string file_path = dirPath + "/data.txt";  // 文件的完全路径
+std::string data_to_write = "fuck you linux";   // 写入的内容
+
+// 在对应路径创建一个文件并写入一些内容
+std::ofstream outFile(file_path,
+    std::ios::out | std::ios::trunc);
+
+// 写入内容
+if (outFile.is_open()) {
+    outFile << data_to_write;
+    outFile.close();
+}
+
+else { std::cerr << "Failed to open the file" << std::endl; }
+```
+
+> ### 读文件的操作
+
+```cpp
+#include <fstream>
+
+int main() {
+    std::ifstream inFile("data.txt"); // 打开文件
+
+    if (!inFile) {  // 检查文件是否打开成功
+        std::cerr << "Failed to open file!" << std::endl;
+        return 1;
+    }
+
+    std::string line;
+    // 按行读取文件内容
+    while (std::getline(inFile, line)) {
+        std::cout << line << std::endl;  // 输出每一行
+    }
+
+    inFile.close();  // 关闭文件
+    return 0;
+}
+```
+
+<br>
+
+#### 4.2.2 创建一个文件夹
+
+> 使用 `fs::create_directory` 创建单一目录
+>
+> 使用 `fs::create_directories` 创建多层目录（如果父目录不存在，会一并创建）
+
+#### 4.2.3 `path`的一些操作
+
+> 显示当前所在的路径
+
+```cpp
+std:: cout << fs::current_path() << std::endl;
+```
+
+> `path` 是 `fs` 的一个类，对 `/` 进行了重写，所以可以通过改写这个来改变路径 
+
+```cpp
+#include <iostream>
+#include <filesystem>
+
+namespace fs = std::filesystem;
+
+int main() {
+    // 获取当前工作路径并拼接上上一级目录
+    fs::path dirPath = fs::current_path() / "..";
+    std::cout << dirPath << std::endl;
+
+    return 0;
+}
+```
+
+
+
+<br>
+
 ## Ex. CMakeLists 编写
 
 ---
@@ -886,5 +1024,16 @@ int main() {
     Py_Finalize();
     return 0;
 }
+```
+
+### 4. 指定头文件的搜索路径的写法
+
+```cmake
+# 添加头文件搜索路径
+include_directories(
+	# 头文件所在的路径
+    include
+    .pio/libdeps/STC89C52RC/include/
+)
 ```
 

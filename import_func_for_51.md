@@ -6,6 +6,8 @@
 
 ## 1. 中断函数和对应的中断执行函数
 
+### 1.1 函数的实现
+
 > 中断函数
 
 ```c++
@@ -47,12 +49,43 @@ void time0() __interrupt(1) {
 }
 
 
-
 void Timer1_Routine() __interrupt(3) {
     TL1 = 0x20;				//设置定时初始值
     TH1 = 0xD1;				//设置定时初始值
 }
 ````
+
+### ==1.2 计时器时间的计算==
+
+> `TL` 是存储记记时的 低 8 位，`TH` 是 高 8 位
+
+- 时间的计算
+
+$$
+\begin{align*}
+	T = \frac{当前的计数次数}{计时器的频率}
+\end{align*}
+$$
+
+- 次数计数的计算
+
+```c
+TH0 * 256 + TL0;		// 计算执行了多少次
+```
+
+- 计算时间
+
+>  **1 MHz**：单片机定时器常用频率，表示每秒计数 1,000,000 次
+>
+> 所以我们可以计算我们执行了多少次，然后除以 $1\times 10^6$ ，就可以知道需要多少时间了
+
+$$
+\begin{align*}
+	T = \frac{Count}{计时器的频率} = \frac{Count}{1MHz} = Count \text{ }\mu s = \frac{Count}{1e6}\text {} s
+\end{align*}
+$$
+
+
 
 ## 2. 键盘的映射表
 
@@ -347,6 +380,22 @@ void LCD_ShowSignedNum(unsigned char Line, unsigned char Column, int Number, uns
     for (i = Length; i > 0; i--) {
         LCD_WriteData(Number1 / LCD_Pow(10, i - 1) % 10 + '0');
     }
+}
+
+// 显示浮点数
+void LCD_ShowFloat(unsigned char Line, unsigned char Column, float num, unsigned char width,
+    unsigned char decimal_places) {
+    char buffer[20];
+    char format[10];
+
+    // 构造格式字符串，确保浮点数按照指定的宽度和小数位数显示
+    sprintf(format, "%%-%d.%df", width, decimal_places);
+
+    // 使用sprintf格式化浮点数
+    sprintf(buffer, format, num);
+
+    // 显示格式化后的字符串
+    LCD_ShowString(Line, Column, buffer);
 }
 ```
 
@@ -652,12 +701,7 @@ unsigned char AT24_ReadByte(unit8_t Word_Addr) {
 
 ![img](https://pic3.zhimg.com/v2-a1ba078021ba77de5704f8c62ef2c720_1440w.jpg)
 
-### 10.2 具体代码实现
-
-> 初始化
-
-```c
-```
+> 声速：$340m/s$
 
 ## 11. 延迟函数
 
@@ -674,5 +718,3 @@ void Delay_X_ms(unsigned char xms)	//@12.000MHz
     }
 }
 ```
-
-> 微秒级延迟函数

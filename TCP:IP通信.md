@@ -6,6 +6,8 @@
 
 ## 1. 变量传递和访问函数
 
+---
+
 ### 1.1 如何给线程函数传递参数
 
 > 多线程引用参数的问题
@@ -483,11 +485,11 @@ void wait(std::unique_lock<std::mutex>& lock, Predicate pred);
 
 - **作用**：谓词用于检查条件是否已经满足。线程在唤醒后会调用这个谓词，只有当返回值为 `true` 时，线程才会继续执行。否则，线程将继续等待。
 
-### 5.2 notify() 
+### 5.2 notify_x() 
 
-> 我们的进程陷入了等待，那么自然也得有人告诉他有资源了，可以不用等了，就有了
+> 我们的进程陷入了等待，那么自然也得有人告诉他有资源了，可以不用等了
 >
-> `notify_one()` & `notify_all()`
+> 于是有了：`notify_one()` & `notify_all()`
 
 ```c++
 #include "include/stdc++.h"
@@ -548,7 +550,7 @@ int main() {
 }
 ```
 
-> 中间出现了很多 {} 的代码块，作用就是为了限制 lock 的范围，不影响到别的范围
+> 中间出现了很多 `{}` 的代码块，作用就是为了限制 lock 的范围，不影响到别的范围
 >
 > 有这个局部作用于存在的话，那么 lock 的影响范围就只在这个块中，随着这个块结束，就释放这锁，允许被访问
 
@@ -584,7 +586,6 @@ public:
         });
         return *instance;
     }
-    
 
     template<class F, class ...Args>
     void add_task(F && func, Args... args) {
@@ -828,6 +829,10 @@ int main() {
 }
 ```
 
+## 9. 多线程服务器的逻辑实现
+
+
+
 <br>
 
 
@@ -840,20 +845,24 @@ int main() {
 
 ## 1. 网络编程的整体函数流程
 
+> 客户端始终只有一个套接字，是自己的，但是要创建服务器的 `sockaddr_in`
+>
+> 服务器有两个套接字，一个自己的，一个 `accept` 拿的对应的客户端的
+
 ![image-20241117105952888](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241117105952888.png)
 
-## 2. 套接字函数
+## 2. `socket()`
 
 > - 参数:
 >     - domain: 使用的地址族协议
->         - AF_INET: 使用IPv4格式的ip地址
->         - AF_INET6: 使用IPv6格式的ip地址
+>         - `AF_INET`: 使用 `IPv4` 格式的 `ip` 地址
+>         - `AF_INET6`: 使用 `IPv6` 格式的 `ip` 地址
 > - type:
->     - SOCK_STREAM: 使用流式的传输协议
->     - SOCK_DGRAM: 使用报式(报文)的传输协议
-> - protocol: 一般写0即可, 使用默认的协议
->     - SOCK_STREAM: 流式传输默认使用的是tcp
->     - SOCK_DGRAM: 报式传输默认使用的udp
+>     - `SOCK_STREAM`: 使用流式的传输协议
+>     - `SOCK_DGRAM`: 使用报式(报文)的传输协议
+> - protocol: 一般写 0 即可, 使用默认的协议
+>     - `SOCK_STREAM`: 流式传输默认使用的是 tcp
+>     - `SOCK_DGRAM`: 报式传输默认使用的 udp
 > - 返回值:
 >     - **成功: 可用于套接字通信的文件描述符**
 >     - 失败: -1
@@ -903,6 +912,8 @@ struct sockaddr_in {
 ### 3.1 使用场景
 
 > 服务端：绑定 IP 和端口
+>
+> 对于 `htons()` 的说明请看看后面的 3.3
 
 ```c
 struct sockaddr_in server_addr;
@@ -912,23 +923,82 @@ server_addr.sin_port = htons(8080);  // 设置端口为 8080
 server_addr.sin_addr.s_addr = INADDR_ANY;  // 绑定本机所有可用 IP
 
 // 绑定地址和端口
-bind(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr));
+bind(sever_sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr));
 ```
 
 > 客户端：连接到服务器
 
 ```c
-struct sockaddr_in client_addr;
+struct sockaddr_in server_addr;
 
-client_addr.sin_family = AF_INET;		// 使用的协议
-client_addr.sin_port = htons(8080);  	// 目标服务器端口
-inet_pton(AF_INET, "192.168.1.1", &client_addr.sin_addr);  // 转换 IP 地址
+server_addr.sin_family = AF_INET;		// 使用的协议
+server_addr.sin_port = htons(8080);  	// 目标服务器端口
+// client_addr.sin_addr = inet_addr.s_addr("SERVER_IP"); 比较简单，但有隐患
+inet_pton(AF_INET, "SERVER_IP", &server_addr.sin_addr);  // 转换 IP 地址
 
 // 连接到目标服务器
-connect(sockfd, (struct sockaddr*)&client_addr, sizeof(client_addr));
+connect(client_sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr));
 ```
 
-## 4. 监听函数
+### ==3.2 IP 地址的分类==
+
+![image-20241130183348147](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/uPic/image-20241130183348147.png)
+
+> ### `A` 类地址
+
+<img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ee46e44ba6a44427831a4872f76311bd~tplv-k3u1fbpfcp-zoom-in-crop-mark:1512:0:0:0.awebp" alt="img" style="zoom:65%;" />
+
+> 所以 A 的地址范围就是：`0.0.0.0 ~ 127.255.255.255`
+>
+> `10.0.0.0～10.255.255.255`这个范围的A类地址是私有的，不再公网中使用，仅用于局域网（LAN）内部通信，不会在公网（Internet）中直接使用或路由
+>
+> 那么这些局域网地址一共有多少个呢？
+
+![image-20241130202603587](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/uPic/image-20241130202603587.png)
+
+> ### `B` 类地址
+>
+> 其实不同的 x 类地址，就是第一位字节的 0 所在的位置而改变地址的范围
+>
+> 那么地址类别越靠前，那么说能分配的地址就越多
+
+<img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1f8675ff617947dca135add4613e4339~tplv-k3u1fbpfcp-zoom-in-crop-mark:1512:0:0:0.awebp" alt="img" style="zoom:67%;" />
+
+<br>
+
+- 我们简单总结一下
+- 你转换 IP 地址的第一位，只需要看前几位 0 在哪里就知道是第几类地址了
+- `C` 的是最常用的私有地址范围，尤其是在家庭或小型企业网络中
+
+| 地址类别 |           起始范围            |   前几位   |          十进制范围           |          私有地址范围           |
+| :------: | :---------------------------: | :--------: | :---------------------------: | :-----------------------------: |
+|   A类    | `0.0.0.0` ~ `127.255.255.255` | `0xxxxxxx` | `0.0.0.0` ~ `127.255.255.255` |  `10.0.0.0` ~ `10.255.255.255`  |
+|   B类    | `128.0.0.0`~`191.255.255.255` | `10xxxxxx` | `128.0.0.0`~`191.255.255.255` | `172.16.0.0` ~ `172.31.255.255` |
+|   C类    | `192.0.0.0`~`223.255.255.255` | `110xxxxx` | `192.0.0.0`~`223.255.255.255` | `192.168.0.0`~`192.168.255.255` |
+
+
+
+### 3.3 `htons()`
+
+> 这个函数解决的**大小端问题**，我就不再赘述了，那么看关键的函数名字的部分
+>
+> 通过这个函数，那么我们在客户端绑定到服务端的时候
+>
+> 最后的一个 `s` 代表的意思是 `unsigned short` 因为它正好是 32 bit，也就是 4 字节
+
+![image-20241130204911453](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/uPic/image-20241130204911453.png)
+
+### 3.4 `inet_ptons()`
+
+> 更加安全，虽然一般来说就是 `inet_addr()` 也可以的
+
+```cpp
+inet_pton(AF_INET, "192.168.1.1", &client_addr.sin_addr);  // 转换 IP 地址
+```
+
+<br>
+
+## 4. `listen()`
 
 > **进入监听状态**：
 >
@@ -953,79 +1023,108 @@ connect(sockfd, (struct sockaddr*)&client_addr, sizeof(client_addr));
 int listen(int sockfd, int backlog);
 ```
 
-## 5. 客户端接收函数
+## 5. `accept()` 
 
-> #### **参数解释**
->
 > 1. **`sockfd`**：
->     - **类型**：`int`。
->     - **描述**：这是一个已经调用了 `bind()` 和 `listen()` 的监听套接字。`sockfd` 是服务器端的套接字描述符，用于接收客户端的连接请求（就是文件描述那个）。
+>    - **类型**：`int`。
+>     - **描述**：这是一个已经调用了 `bind()` 和 `listen()` 的监听套接字。`sockfd` 是服务器端的套接字描述符
 > 2. **`addr`**：
 >     - **类型**：`struct sockaddr *`（通常使用 `struct sockaddr_in *`，即 IPv4 地址类型）。
 >     - **描述**：这是一个指向 `struct sockaddr` 类型的指针，`accept` 会将客户端的地址信息填充到这个结构体中。你可以使用 `struct sockaddr_in` 来获取 IPv4 地址和端口号。这个参数是可选的，可以为 `NULL`，但通常我们使用它来获取客户端的信息。
+>     - **注意**：但是我们一般创建的都是 `sockaddr_in` 类型，所以一般都在这里进行强制类型转换
 > 3. **`addrlen`**：
->     - **类型**：`socklen_t *`。
->     - **描述**：这个参数是 `addr` 参数所指向的结构体的大小。调用 `accept` 之前，这个参数应该是 `addr` 指向的内存块的大小（即 `sizeof(struct sockaddr_in)`），调用后，它将返回实际存储的地址大小
+>     - **类型**：`socklen_t *`，就是 sockaddr_in 的大小。
+>     - **描述**：用于存储客户端信息的 `sockaddr_in` 
 
 ```c
 // 返回值
 	// 成功：返回一个 *新的套接字描述符 cfd*，该套接字是用于与客户端通信的。此时，服务器已经成功接收到客户端的连接。
 	// 失败：返回 -1，并且设置 errno。可能的错误原因包括套接字不可用、资源不足、连接超时等。
-
-int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+int accept(int sockfd, struct sockaddr *client_addr, socklen_t *client_addr_len);
 ```
 
+<br>
 
-
-## 6. 通信的接受和发送
+## 6. `connect()` 
 
 ---
 
-### **`recv` 和 `send` 函数简介**
+> 绑定客户端套接字，到服务器的地址信息
 
-> `recv` 和 `send` 是专门为套接字设计的函数，与 `read` 和 `write` 类似，但提供了更多的功能（通过 `flags` 参数）。
->
-> 它们是网络编程中处理数据传输的常用接口。
+### 6.1 **`connect`函数的常见参数**
+
+>- **socket**: 要连接的客户端套接字
+>- **address**: 服务器的地址信息，通常是一个 `sockaddr` 结构，包含服务器的 IP 地址和端口号
+>- **address_length**: 地址结构的大小，通常是 `sizeof(sockaddr_in)`
+
+### **6.2 `connect` 函数的错误处理**
+
+>- 如果连接成功，`connect` 返回 0
+>- 如果连接失败，`connect` 返回 `-1`，并且可以通过 `errno` 获取具体的错误原因
+
+```cpp
+// 连接到服务器
+if (connect(client_sockfd, (struct sockaddr*)&server_address, sizeof(server_address)) == -1) {
+    perror("连接失败");
+    close(sock);
+    exit(1);
+}
+```
+
+<br>
+
+## 7. 通信的接受和发送
+
+---
+
+### **`recv` 和 `send` 的返回值的如何确定的**
+
+
+
+![image-20241201145321273](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/uPic/image-20241201145321273.png)
 
 ### 1. `send()`
+
+> - **`sockfd`**: 套接字描述符
+> 	- 客户端的话要写自己的，但是服务端要写客户端
+> - **`buf`**: 指向要发送的数据缓冲区的指针。
+> - **`len`**: 要发送的数据字节数。
+> - **`flags`**: 控制发送行为的标志。
+> 	- 常用标志：
+> 		- `0`：默认，无特殊行为。
+> 		- `MSG_DONTWAIT`：非阻塞发送。
+> 		- `MSG_NOSIGNAL`：阻止发送过程中产生的 `SIGPIPE` 信号（如对端关闭连接时）。
+> - **返回值**:
+> 	- 成功：返回发送的字节数。
+> 	- 失败：返回 `-1`，并设置 `errno`。
 
 ```cc
 ssize_t send(int sockfd, const void *buf, size_t len, int flags);
 ```
 
-- **`sockfd`**: 套接字描述符。
-- **`buf`**: 指向要发送的数据缓冲区的指针。
-- **`len`**: 要发送的数据字节数。
-- **`flags`**: 控制发送行为的标志。
-    - 常用标志：
-        - `0`：默认，无特殊行为。
-        - `MSG_DONTWAIT`：非阻塞发送。
-        - `MSG_NOSIGNAL`：阻止发送过程中产生的 `SIGPIPE` 信号（如对端关闭连接时）。
-- **返回值**:
-    - 成功：返回发送的字节数。
-    - 失败：返回 `-1`，并设置 `errno`。
-
-------
+<br>
 
 ### 2. `recv()`
+
+> - **`sockfd`**: 套接字描述符。
+> - **`buf`**: 用于存储接收数据的缓冲区指针。
+> - **`len`**: 缓冲区大小（可接收的最大字节数）。
+> - **`flags`**: 控制接收行为的标志。
+> 	- 常用标志：
+> 		- `0`：默认，无特殊行为。
+> 		- `MSG_PEEK`：窥探数据，不移出接收缓冲区。
+> 		- `MSG_WAITALL`：阻塞接收直到读取完整的 `len` 字节。
+> 		- `MSG_DONTWAIT`：非阻塞接收。
+> - **返回值**:
+> 	- 成功：**返回接收到的字节数**。
+> 	- 连接关闭：返回 `0`。
+> 	- 失败：返回 `-1`，并设置 `errno`。
 
 ```cc
 ssize_t recv(int sockfd, void *buf, size_t len, int flags);
 ```
 
-- **`sockfd`**: 套接字描述符。
-- **`buf`**: 用于存储接收数据的缓冲区指针。
-- **`len`**: 缓冲区大小（可接收的最大字节数）。
-- **`flags`**: 控制接收行为的标志。
-    - 常用标志：
-        - `0`：默认，无特殊行为。
-        - `MSG_PEEK`：窥探数据，不移出接收缓冲区。
-        - `MSG_WAITALL`：阻塞接收直到读取完整的 `len` 字节。
-        - `MSG_DONTWAIT`：非阻塞接收。
-- **返回值**:
-    - 成功：**返回接收到的字节数**。
-    - 连接关闭：返回 `0`。
-    - 失败：返回 `-1`，并设置 `errno`。
+
 
 ### 3.  `recv()`  返回值的使用场景
 
@@ -1038,6 +1137,33 @@ if (recv_status > 0) {
     std::cout << "Server Reply: " 
         	// 注意看这里的 把拿到的数据转换成了 string 然后开辟对应的大小的 begin() + recv_status
           << std::string(buf.begin(), buf.begin() + recv_status) << std::endl;
+}
+```
+
+### 4. `send()` 发送数据过大的问题
+
+> 如果说 `send()` 发送的数据过大的话，我们“发一收一”的模式就不太合适了
+>
+> 因为过大的数据，计算机是拆分多次发送，于是发一就马上收一，但是数据没有发送完的嘛，就可能变成多次对话了
+>
+> 为了解决这个问题，我们可以记录发送的数量，循环一直记录接受的数量，一直到我们发送的数量再停止
+
+```cc
+// 接收数据
+ssize_t recv_len = 0; // 已接收的字节数
+std::vector<char> buf(1024); // 接收缓冲区，大小为1024字节
+
+while (recv_len < send_len) {
+    // 第三个参数是可用的空间的大小，每一次减的是上一次的，所以可用总是反应当前次的
+    ssize_t recv_count = recv(client_sockfd, buf.data() + recv_len, buf.size() - recv_len, 0);
+    if (recv_count == -1) {
+        std::cerr << "Error in recv: " << strerror(errno) << std::endl;
+        return -1;
+    } else if (recv_count == 0) {
+        std::cerr << "Connection closed by peer." << std::endl;
+        break; // 对端关闭连接
+    }
+    recv_len += recv_count; // 累计接收的字节数
 }
 ```
 
@@ -1137,3 +1263,6 @@ Port 443
 > [软件的地址](https://www.alipan.com/t/iP1WZgrmfUGb4t5a3Bhj)
 >
 > 使用方法
+
+# Windows 编程
+

@@ -221,6 +221,30 @@ int main() {
 }
 ```
 
+#### ==2. 让一个函数返回类型为函数指针==
+
+```c
+// 定义一个具体的函数
+int myFunction(int x) { return x * x; }
+
+// 返回值是函数指针的函数
+int (*getFunction(void))(int) {
+    return myFunction; // 返回函数的地址
+}
+
+int main() {
+    // 获取函数指针
+    int (*funcPtr)(int) = getFunction();	// 函数返回是一个函数指针
+
+    // 调用通过函数指针返回的函数
+    printf("Result: %d\n", funcPtr(5)); 	// 输出 25
+
+    return 0;
+}
+```
+
+
+
 ### 1.5  位运算
 
 | 运算符 | 中文名称 | 英文名称  | 作用                                                         |

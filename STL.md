@@ -442,6 +442,98 @@ dict_p = { 'a': 1, 'b': 1, 'c': 1 }
 dict_s = { 'c': 1, 'a': 1, 'b': 1 }
 ```
 
+## 8. filesystem
+
+---
+
+### ==8.1 filestream==
+
+> ### 读文件的操作
+>
+> 这个 `is_open()` 不需要文件是否存在与否，保证文件能够正常打开就行
+
+```cpp
+#include <fstream>
+
+// 在对应路径创建一个文件并写入一些内容
+std::ofstream outFile("/data.txt", std::ios::out | std::ios::trunc);
+
+// 写入内容
+if (outFile.is_open()) {
+    outFile << "fuck you linux";
+    outFile.close();
+}
+
+else { std::cerr << "Failed to open the file" << std::endl; }
+```
+
+> ### 读文件的操作
+
+```cpp
+#include <fstream>
+
+std::ifstream inFile("data.txt"); // 打开文件
+
+if (!inFile) {  // 检查文件是否打开成功
+    std::cerr << "Failed to open file!" << std::endl;
+    EXIT();
+}
+
+std::string line;		// 缓冲区
+
+// 按行读取文件内容
+while (std::getline(inFile, line)) {
+    std::cout << line << std::endl;  // 输出每一行
+}
+
+inFile.close();  // 关闭文件
+```
+
+<br>
+
+### 8.2 创建一个文件夹
+
+> 使用 `fs::create_directory` 创建单一目录
+>
+> 使用 `fs::create_directories` 创建多层目录（如果父目录不存在，会一并创建）
+
+### 8.3 `path`的一些操作
+
+> 显示当前所在的路径
+
+```cpp
+std:: cout << fs::current_path() << std::endl;
+```
+
+> `path` 是 `fs` 的一个类，对 `/` 进行了重写，所以可以通过改写这个来改变路径 
+
+```cpp
+#include <iostream>
+#include <filesystem>
+
+namespace fs = std::filesystem;
+
+int main() {
+    // 获取当前工作路径并拼接上上一级目录
+    fs::path dirPath = fs::current_path() / "..";
+    std::cout << dirPath << std::endl;
+
+    return 0;
+}
+```
+
+### 8.4 遍历一个文件夹的所有内容
+
+```cpp
+ fs::directory_iterator dir(this->img_path);     // 一个文件夹的遍历器
+// 这里的 auto 是 dir_enrty 类对象，具体是啥你可以看看官网
+for (const auto & it : dir) {
+    std::cout << it.path().filename().string() << std::endl;
+}
+```
+
+
+
 # Algorithm
 
 ---

@@ -1,5 +1,0 @@
-D:/Code/QT/First_Demo/cmake-build-debug/CMakeFiles/First_Demo.dir
-D:/Code/QT/First_Demo/cmake-build-debug/CMakeFiles/edit_cache.dir
-D:/Code/QT/First_Demo/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-D:/Code/QT/First_Demo/cmake-build-debug/CMakeFiles/First_Demo_autogen_timestamp_deps.dir
-D:/Code/QT/First_Demo/cmake-build-debug/CMakeFiles/First_Demo_autogen.dir

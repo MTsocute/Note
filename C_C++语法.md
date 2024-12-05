@@ -260,6 +260,8 @@ void error_handling(char *message) {
 
 ----
 
+> 对象编程（OOP）中的三个基本特性之一（封装、继承、多态）
+
 ### 2.1 delete 禁止某些成员函数
 
 > `delete` 关键字不仅仅限制在**操作符函数**上，也可以用来删除任何**特殊成员函数**，包括普通成员函数
@@ -435,6 +437,8 @@ delete nonPolymorphic;
 ### 2.5 有元函数
 
 > 友元函数可以访问类中的私有数据和方法，这样可以在不暴露这些成员的情况下提供特定功能。
+>
+> 但是是要把类对象作为参数导入的时候哈
 
 ```c++
 class MyClass; // 前向声明
@@ -469,6 +473,132 @@ int main() {
 ```
 
 
+
+### 2.6 `virtual`
+
+---
+
+#### 1. 基本概念
+
+> 虚函数的关键点是**动态绑定**（也叫运行时绑定）。
+>
+> 在没有 `virtual` 的情况下，C++ 的函数调用是**静态绑定**（也叫编译时绑定），即编译器在编译时就确定了调用哪个函数。而 `virtual` 会告诉编译器，**函数调用要在运行时根据对象的实际类型来确定**
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class Animal {
+public:
+    virtual void makeSound() {  // 虚函数
+        cout << "Animal makes sound" << endl;
+    }
+};
+
+class Dog : public Animal {
+public:
+    void makeSound() override {  // 重写虚函数
+        cout << "Dog barks" << endl;
+    }
+};
+
+class Cat : public Animal {
+public:
+    void makeSound() override {  // 重写虚函数
+        cout << "Cat meows" << endl;
+    }
+};
+
+void playSound(Animal* animal) {
+    animal->makeSound();  // 动态绑定
+}
+
+int main() {
+    Dog dog;
+    Cat cat;
+
+    playSound(&dog);  // 输出：Dog barks
+    playSound(&cat);  // 输出：Cat meows
+
+    return 0;
+}
+```
+
+#### 2. 虚函数的规则
+
+**必须通过指针或引用调用**：如果直接通过对象调用，仍然是静态绑定。
+
+**重写时函数签名必须一致**：
+
+- 参数和返回值类型必须匹配。
+- 可以使用 `override` 关键字来明确地表明重写行为。
+
+```cpp
+void display() override;  // 推荐使用
+```
+
+**虚函数只能存在于类中**：全局函数不能声明为虚函数
+
+**如果一个类有虚函数，其析构函数通常也应声明为虚函数**：避免通过基类指针删除派生类对象时资源释放不完全的问题。
+
+```cpp
+class Base {
+public:
+    // 析构函数声明为虚类
+    virtual ~Base() { std::cout << "Base destroyed\n"; }
+};
+
+class Derived : public Base {
+public:
+    ~Derived() { std::cout << "Derived destroyed\n"; }
+};
+```
+
+#### 3. 纯虚函数
+
+> 如果一个类中的虚函数不需要具体实现，可以声明为 **纯虚函数**，用 `= 0` 表示
+>
+> 带有纯虚函数的类是**抽象类**，不能直接实例化。它通常用作接口，让派生类实现特定功能。
+
+```cpp
+class Payment {
+public:
+    virtual void process() = 0;  // 纯虚函数，提供统一接口
+};
+
+class CreditCard : public Payment {
+public:
+    void process() override {
+        cout << "Processing credit card payment" << endl;
+    }
+};
+
+class PayPal : public Payment {
+public:
+    void process() override {
+        cout << "Processing PayPal payment" << endl;
+    }
+};
+
+// 客户端代码
+void checkout(Payment* payment)	// 动态绑定 
+{
+    payment->process();  // 统一调用接口
+}
+
+int main() {
+    CreditCard cc;
+    PayPal pp;
+
+    checkout(&cc);  // 输出：Processing credit card payment
+    checkout(&pp);  // 输出：Processing PayPal payment
+    return 0;
+}
+```
+
+
+
+<br>
 
 ## 3. 设计模式
 
@@ -707,7 +837,7 @@ private:
 
 ---
 
-### 4.1 `open` 函数
+### 4.1 `open` 函数的文件描述符
 
 > `open` 函数的文件状态描述
 
@@ -1037,3 +1167,24 @@ include_directories(
 )
 ```
 
+### 5. 多个不同地方的源文件的一起汇编处理
+
+> 可以把全部的**源文件**和**头文件**分化为两个部分
+>
+> 但是为了区别模块的不同的功能，我们一般会采用分文件的写法，往往很可能出现多个文件存储源文件的情况，这个时候编写 `CMakeLists.txt` 的 `add_executable()` 总不能把一个个源文件全部都写出来吧，所有就有了下面的介绍
+
+- `file()`
+
+    > 这个函数就是把所有的文件统一的这个整体取一个别名
+    >
+    > `GLOB_RECURSE`：表示递归搜索指定路径及其子目录中的文件
+    >
+    > `SOURCES`：取的别名
+
+```cmake
+# 和 main.c 一起编译的源文件所在的地方
+file(GLOB_RECURSE SOURCES "Core/*.*" "Drivers/*.*" "Hardware/*.*")
+
+# 使用别名统一汇编
+add_executable(${PROJECT_NAME}.elf ${SOURCES})	# 编译出来的不是 .exe 而是 .elf
+```

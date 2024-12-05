@@ -131,7 +131,9 @@ connect(ui->brosewButton, &QPushButton::clicked,
    );
 ```
 
-## 3. LineEdit
+## 3. `LineEdit`
+
+---
 
 ### 3.1 `LineEdit` 显示输出
 
@@ -142,18 +144,216 @@ connect(ui->brosewButton, &QPushButton::clicked,
 ui->displayLine->setText(expression);	// displayLine 就是我们的 LineEdit
 ```
 
-## 4. PushButton
+## 4. `PushButton`
+
+---
 
 ### 4.1 `PushButton `改变背景色
 
 ```cpp 
 ```
 
+## 5. `QTimer`
+
+> 这个是 `QT` 自带的一种定时器， 在 `QTObject` 里面，但是它也有一个单独的类，所以我们可以直接使用或者类实现定时器的效果
+
+- 创建一个定时器
+
+```cpp
+// 在 Qwidget 窗口中创建一个定时器，记得定时器需要在构造函数中创建哈
+auto * timer = new QTimer;
+```
+
+- 这个定时器是每间隔一个 `TIMEOUT` 的时间间隔就执行一个 `updateImage `函数
+
+```cpp
+// 连接定时器的timeout信号
+connect(timer, &QTimer::timeout, this, &Timer::updateImage);
+```
+
+- 开始和停止都非常的简单，只需要用 `timer` 的成员函数 `start()` 和 `stop()` 就可以了
+
+- 当然计时器也是可以只执行一次的
+
+```cpp
+QTimer::singleShot(TIMEOUT, this, &Timer::updateImage);
+```
+
+<br>
+
+## 6.`QT`  文件操作
+
+---
+
+### 6.1  获取文件信息
+
+> 我们 `Windows` 上面那种常见的打开文件的对话框
+
+<img src="https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241205130647418.png" alt="image-20241205130647418" style="zoom:88%;" />
+
+> 打开页面的对话框已经封装好了，所以我们只用调用就可以了
+>
+> ### 总结：
+>
+> - `parent`：指定对话框的父窗口。
+> - `caption`：设置对话框的标题。
+> - `dir`：设置对话框初次打开时的目录。
+> - `filter`：文件类型过滤器，用于限制显示的文件类型。
+> - `selectedFilter`：获取用户选择的过滤器。
+> - `options`：控制对话框的额外行为和外观的选项。
+>
+> ### **返回值**
+>
+> 如果你真的选了一个文件，其实会返回一个路径来的
+
+```cpp
+#include <QFileDialog>
+
+static QString getOpenFileName(
+	QWidget *parent = nullptr,
+	const QString &caption = QString(), 
+	const QString &dir = QString(),
+  	const QString &filter = QString(),
+  	QString *selectedFilter = nullptr,
+   	Options options = Options()
+);
+```
+
+> 一般的调用函数
+
+```cpp
+// 这里是 home 的路径    
+QFileDialog::getOpenFileName(this, tr("选择一个文件"), QDir::homePath(), "*.*");
+// 这里是 current 路径
+QFileDialog::getOpenFileName(this, tr("选择一个文件"), 
+                             QCoreApplication::applicationDirPath(), 
+                             "*.*");
+// 我们来限制只要的文件的类型
+QFileDialog::getOpenFileName(this, tr("选择一个文件"), 
+                             QCoreApplication::applicationDirPath(), 
+                             "*.cpp");
+```
+
+> 限制了之后就只有 `.cpp` 文件才可以被选中了
+
+![image-20241205132430517](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241205132430517.png)
+
+### 6.2 打开文件返回值处理
+
+```cpp
+auto fileName =  QFileDialog::getOpenFileName(this, tr("打开"),
+    QCoreApplication::applicationDirPath(),
+    "*.cpp");
+
+// 如果取消了，返回值就是空的
+if (fileName.isEmpty()) {
+    QMessageBox::warning(this, "警告", "请选择一个文件");
+}
+else {
+    qDebug() << fileName;	// 一般就就是路径
+}
+```
+
+### 6.3 读取文件的内容
+
+```cpp
+QFile file(fileName);		// 创建文件对象
+// 设置文件为只读和
+if (file.open(QFile::ReadOnly | QFile::Text)) {
+    QTextStream stream(&file);
+    auto content = stream.readAll();
+
+    // 把读取到的东西全部输出到 Text 上面
+    ui->textEdit->setText(content);
+}
+else {
+    qDebug() << fileName;
+    QMessageBox::warning(this, "错误", "无法打开文件进行读取");
+}
+file.close();
+```
+
+### 6.4 保存文件
+
+> 把 `textEdit` 的内容保存为一个文件存储
+
+```cpp
+// 判断 textEdit 是否不为空，如果是的话，就另存其内容为一个新的文件
+if (ui->textEdit->toPlainText().isEmpty()) {
+    QMessageBox::warning(this, "警告", "当前文本内容为空无法另存为其他文件!");
+    return;
+}
+
+// 打开一个另存为选择框
+auto fileName = QFileDialog::getSaveFileName(this, tr("另存为"), QDir::homePath());
+
+// 如果文件名啥也没有，就返回一个空
+if (fileName.isEmpty()) {
+    QMessageBox::warning(this, "警告", "请选择一个文件");
+} else {
+    QFile file(fileName);
+    if (file.open(QFile::WriteOnly)) {
+        QTextStream stream(&file);
+        stream << ui->textEdit->toPlainText();
+    } else {
+        QMessageBox::warning(this, tr("错误"), tr("无法保存文件"));
+    }
+    file.close();
+}
+```
+
+<br>
+
+## 7. QT `Event()`
+
+---
+
+> 在 UI 界面的类函数创建一个键盘事件的触发函数
+>
+> 事件触发的类型非常的多，具体的话，还是去看文档哈
+
+```cpp
+class MainWindow : public QMainWindow {
+    Q_OBJECT
+
+public:
+    explicit MainWindow(QWidget *parent = nullptr);
+	
+    // 键盘对应事件的函数的就创建出来了
+    void keyPressEvent(QKeyEvent *k_event) override;	// 就是这里
+
+    ~MainWindow() override;
+
+private slots:
+    void newActionTriggered();
+    void openActionTriggered();
+    void saveActionTriggered();
+
+private:
+    Ui::MainWindow *ui;
+};
+```
+
+> 函数中做的事情
+
+```cpp
+void MainWindow::keyPressEvent(QKeyEvent *k_event) {
+    // 如果键盘按下 ctrl + N
+    if (k_event->modifiers() == Qt::ControlModifier && k_event->key() == Qt::Key_N) { this->newActionTriggered(); }
+    // 如果键盘按下 ctrl + O
+    if (k_event->modifiers() == Qt::ControlModifier && k_event->key() == Qt::Key_O) { this->openActionTriggered(); }
+    // 如果键盘按下 ctrl + S
+    if (k_event->modifiers() == Qt::ControlModifier && k_event->key() == Qt::Key_S) { this->saveActionTriggered(); }
+}
+```
+
 
 
 ## Ex. 环境配置
 
-### 1. CMakeLists.txt 配置 QT 编译的路径
+---
+
+### 1. CMakeLists.txt 配置 `QT` 编译的路径
 
 ```cmake
 set(CMAKE_CXX_STANDARD 20)

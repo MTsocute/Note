@@ -1,4 +1,0 @@
-ToolSet: 11.0 w64 (local)@D:\App\jetbrains\CLion 2023.3.5\bin\mingw
-Options: 
-
-Options:-DCMAKE_MAKE_PROGRAM=D:/App/jetbrains/CLion 2023.3.5/bin/ninja/win/x64/ninja.exe

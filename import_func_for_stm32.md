@@ -87,9 +87,6 @@ HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 ## 5.GPIO 脚针的 PIN 口的定义
 
 ```cpp
-/** @defgroup GPIO_pins_define GPIO pins define
-  * @{
-  */
 // 0000 0000 0000 0001
 #define GPIO_PIN_0                 ((uint16_t)0x0001)  /* Pin 0 selected    */
 // 0000 0000 0000 0010
@@ -111,7 +108,9 @@ HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 #define GPIO_PIN_All               ((uint16_t)0xFFFF)  /* All pins selected */
 ```
 
+## 6. Debug 文件配置
 
+![image-20241206180242134](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241206180242134.png)
 
 # 2. HAL 库函数
 
@@ -169,3 +168,28 @@ HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 GPIO_PinState HAL_GPIO_ReadPin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);
 ```
 
+<br>
+
+### 3. 中断函数
+
+> **`__HAL_GPIO_EXTI_GET_IT(Sensor_Count_Pin)`**: 用来检查外部中断的标志位是否被触发
+>
+> **`HAL_GPIO_EXTI_IRQHandler(Sensor_Count_Pin)`**: 清除外部中断的挂起标志
+
+```c
+void EXTI9_5_IRQHandler(void) {
+    // 如果发生中断的话
+    if (__HAL_GPIO_EXTI_GET_IT(Sensor_Count_Pin)) {
+        HAL_GPIO_EXTI_IRQHandler(Sensor_Count_Pin);
+        IR_Sensing_Count ++;	// 不重要
+    }
+}
+```
+
+
+
+# 3. 硬件编码原理
+
+---
+
+> 这里提供主要的驱动模块，而是每一个驱动的编写原理

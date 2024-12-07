@@ -995,23 +995,31 @@ int main() {
 > - `target_link_libraries`：这个是针对**第三方库头文件**对应的 `include` 路径
 
 ```cmake
+cmake_minimum_required(VERSION 3.15)
+
+set(CMAKE_PREFIX_PATH  "D:/vcpkg/installed/x64-mingw-dynamic")	# 找到 vcpkkg 安装目录
+
+# 项目名称
+project(EigenExample)
+
+# 设置 C++ 标准
+set(CMAKE_CXX_STANDARD 17)
+
 # 查找 Eigen3 库
 find_package(Eigen3 CONFIG REQUIRED)
 
-# 添加可执行文件
-add_executable(${PROJECT_NAME} rotation_cube.cc)
-
 if (Eigen3_FOUND)
-    message(STATUS "Eigen3 Include Directories: ${EIGEN3_INCLUDE_DIRS}")
-    
-    # 单一文件对应导入 include 的写法
-    add_executable(${PROJECT_NAME}_EIGEN rotation_cube_eigen.cc)
-    # PRIVATE 的意思，如果有文件导入我们当前的文件，那么不可以通过这个文件来使用它导入的文件的函数功能
-    target_link_libraries(${PROJECT_NAME}_EIGEN PRIVATE Eigen3::Eigen)
-    
-else ()
+    message(STATUS "Eigen3 Found at: ${EIGEN3_INCLUDE_DIRS}")
+
+    # 添加可执行文件
+    add_executable(${PROJECT_NAME} main.cpp)
+
+    # 链接 Eigen3 库
+    target_link_libraries(${PROJECT_NAME} PRIVATE Eigen3::Eigen)
+else()
     message(FATAL_ERROR "Eigen3 library not found. Please install it or check the path.")
-endif ()
+endif()
+
 ```
 
 > - `include_directories`：这个是针对**自定义头文件**链对应的 `include` 路径
@@ -1202,22 +1210,87 @@ include_directories(
 
 ### 5. 多个不同地方的源文件的一起汇编处理
 
-> 可以把全部的**源文件**和**头文件**分化为两个部分
+> 可以把全部的 **源文件** 和 **头文件** 分化为两个部分
 >
 > 但是为了区别模块的不同的功能，我们一般会采用分文件的写法，往往很可能出现多个文件存储源文件的情况，这个时候编写 `CMakeLists.txt` 的 `add_executable()` 总不能把一个个源文件全部都写出来吧，所有就有了下面的介绍
 
-- `file()`
-
-    > 这个函数就是把所有的文件统一的这个整体取一个别名
-    >
-    > `GLOB_RECURSE`：表示递归搜索指定路径及其子目录中的文件
-    >
-    > `SOURCES`：取的别名
+- `set()`：这个函数就是把所有的文件统一的这个整体取一个别名
 
 ```cmake
 # 和 main.c 一起编译的源文件所在的地方
 file(GLOB_RECURSE SOURCES "Core/*.*" "Drivers/*.*" "Hardware/*.*")
 
-# 使用别名统一汇编
-add_executable(${PROJECT_NAME}.elf ${SOURCES})	# 编译出来的不是 .exe 而是 .elf
+# 使用别名统一汇编# 设置 AUTOUIC 搜索路径
+set(CMAKE_AUTOUIC_SEARCH_PATHS ${CMAKE_SOURCE_DIR}/UI)		# Source Directory: {D:/Code/QT/QT_Client}/UI
+
+# 定义源文件和头文件和UI文件
+set(SOURCE_FILES
+        main.cpp
+        src/client.cpp
+        src/form.cpp
+)
+
+set(HEADER_FILES
+        include/client.h
+        include/form.h
+)
+
+set(UI_FILES
+        UI/client.ui
+        UI/form.ui
+)
+
+# 添加可执行文件
+add_executable(Client
+    ${SOURCE_FILES}
+    ${HEADER_FILES}
+    ${UI_FILES}
+)
 ```
+
+### 6.  CMake 位置参数的变量
+
+> 小总结
+
+| 变量名                     | 说明                                            |
+| -------------------------- | ----------------------------------------------- |
+| `CMAKE_SOURCE_DIR`         | 顶层 CMakeLists.txt 所在目录的绝对路径          |
+| `CMAKE_BINARY_DIR`         | 顶层构建目录的绝对路径（通常是 `build` 文件夹） |
+| `CMAKE_CURRENT_SOURCE_DIR` | 当前 CMakeLists.txt 所在目录的绝对路径          |
+| `CMAKE_CURRENT_BINARY_DIR` | 当前目录的构建目录的绝对路径                    |
+
+### 7. 第三方库的 'head-only'
+
+> 你会发现你用 `vcpkg` 拿到的第三方库会有 `head-only 后缀` 和 `无后缀` 两个版本
+>
+> ### **`fmt::fmt`**
+>
+> - **描述**: 这是 `fmt` 库的常规用法，表示链接 `fmt` 的预编译库文件（通常是动态库或静态库）。
+> - 实现方式: 编译时，`fmt` 的源代码已经被编译为 `.dll`（动态库）或 `.lib`（静态库），但是链接很多时候找库找不到，所以用起来很恼火
+>
+> ### **`fmt::fmt-header-only`**
+>
+> - **描述**: 这是 `fmt` 的头文件模式，所有实现代码都直接包含在头文件中。
+> - 实现方式: 不需要链接任何预编译的库文件，功能完全通过头文件实现
+
+- 所以对于一些第三方库，我们就直接导入 head-only 的版本
+
+```cmake
+cmake_minimum_required(VERSION 3.30)
+project(untitled)
+
+set(CMAKE_CXX_STANDARD 20)
+set(3rtParty "D:/vcpkg/installed/x64-mingw-dynamic")
+set(CMAKE_PREFIX_PATH "${3rtParty}/include")
+
+find_package(fmt CONFIG REQUIRED)
+
+add_executable(untitled main.cpp)
+
+target_link_libraries(untitled PRIVATE
+        fmt::fmt-header-only
+)
+```
+
+
+

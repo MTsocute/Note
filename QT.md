@@ -310,7 +310,7 @@ if (fileName.isEmpty()) {
 
 > 在 UI 界面的类函数创建一个键盘事件的触发函数
 >
-> 事件触发的类型非常的多，具体的话，还是去看文档哈
+> 事件触发的类型非常的多，具体的话，还是去看文档哈c
 
 ```cpp
 class MainWindow : public QMainWindow {
@@ -349,25 +349,142 @@ void MainWindow::keyPressEvent(QKeyEvent *k_event) {
 
 
 
+## 8. 客户端和服务端的通信
+
+---
+
+> **客户端**主要是，套接字的创建，和发送请求
+
+```cpp
+// 创建套接字
+this->socket = new QTcpSocket();
+
+// 外部交互获取 IP 和 PORT
+auto IP = ui->ip_lineEdit->text();
+auto PORT = ui->port_lineEdit->text();
+
+// 连接服务器
+this->socket->connectToHost(QHostAddress(IP), PORT.toShort());
+
+/* 请求成功和失败的处理 */
+
+// 连接服务器成功
+connect(this->socket, &QTcpSocket::connected, [this]() {
+    QMessageBox::information(this, "Server", "Connected");
+});
+// 连接失败
+connect(this->socket, &QTcpSocket::disconnected, [this]() {
+    QMessageBox::information(this, "Server", "Disconnected");
+});
+```
+
+> **服务端**
+
+```cpp
+this->server = new QTcpServer;	// 先创建服务端，而不是套接字
+
+// 开启监听
+server->listen(QHostAddress::AnyIPv4, 10000);
+
+// 获取客户端套接字
+auto *socket = server->nextPendingConnection();
+auto IP = socket->peerAddress().toString(); // 获取客户端地址
+auto PORT = socket->peerPort(); // 获取客户端端口号
+```
+
+
+
 ## Ex. 环境配置
 
 ---
 
-### 1. CMakeLists.txt 配置 `QT` 编译的路径
+### 1. `CMakeLists.txt` 配置
+
+> `QT` 所有需要的 `dll`和 `xxx.h` 都在 `D:/App/QT/6.8.1/mingw_64` 的两个目录下
+>
+> - `bin`：所有 `dll `所在的位置
+> - `lib/cmake`：所有头文件所在的位置
 
 ```cmake
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
-
-# 这个用于追踪我们需要的路径
-set(CMAKE_PREFIX_PATH "D:/App/QT/6.8.0/mingw_64/lib/cmake")
-
-find_package(Qt6 COMPONENTS
-        Core
-        Gui
-        Widgets
-        REQUIRED)
+set(QT_PATH "D:/App/QT/6.8.1/mingw_64")
+link_directories("${QT_PATH}/bin")                      # 第三方库的所在位置
+set(CMAKE_PREFIX_PATH "${QT_PATH}/lib/cmake")           # 头文件库的所在位置
 ```
+
+> 我们一般用这两个方法导入，我们需要的头文件和对应的**源文件**（动态库）
+>
+> 但是链接动态文件实际上并没有导入到 `cmake-build-debug`
+
+![image-20241207133555892](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241207133555892.png)
+
+> 解决
+
+```cmake
+# 将 Qt6Network.dll 复制到目标目录
+add_custom_command(TARGET Server POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${QT_PATH}/bin/Qt6Network.dll"		# 直接塞入 cmake-build-debug
+        $<TARGET_FILE_DIR:Server>)
+```
+
+### 2. ==编译出来的文件在外部可运行的配置==
+
+> 设置了这些之后我们在外部的 exe 文件才可以独立运行
+
+![image-20241207145759288](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241207145759288.png)
+
+### 3. 如何分文件编译
+
+> 我们文件的分布如下，然后分开的文件如何汇编到一起呢？
+
+```shell
+QT_Client/
+├── CMakeLists.txt          # 顶层 CMake 文件
+├── src/
+│   ├── main.cpp
+│   └── CMakeLists.txt      # 子目录 CMake 文件
+├── include/
+│   ├── client.h
+│   └── form.h
+└── UI/
+    ├── client.ui
+    └── form.ui
+```
+
+> 对应的配置为
+>
+> `CMAKE_SOURCE_DIR`：这个参数显示的位置就是 `CMakeLists.txt` 所在的文件夹的位置
+
+```cmake
+# 设置 AUTOUIC 搜索路径
+set(CMAKE_AUTOUIC_SEARCH_PATHS ${CMAKE_SOURCE_DIR}/UI)		# Source Directory: {D:/Code/QT/QT_Client}/UI
+
+# 定义源文件和头文件和UI文件
+set(SOURCE_FILES
+        main.cpp
+        src/client.cpp
+        src/form.cpp
+)
+
+set(HEADER_FILES
+        include/client.h
+        include/form.h
+)
+
+set(UI_FILES
+        UI/client.ui
+        UI/form.ui
+)
+
+# 添加可执行文件
+add_executable(Client
+    ${SOURCE_FILES}
+    ${HEADER_FILES}
+    ${UI_FILES}
+)
+```
+
+
+
+
 

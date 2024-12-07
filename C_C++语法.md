@@ -313,6 +313,15 @@ public:
 };
 ```
 
+> 禁止**拷贝和移动构造一个新的类**
+
+```cpp
+TCP_Server(const TCP_Server &other) = delete;
+TCP_Server operator=(const TCP_Server &other) = delete;
+TCP_Server(TCP_Server&&) = delete;  // 禁止移动构造
+TCP_Server& operator=(TCP_Server&&) = delete;  // 禁止移动赋值
+```
+
 ### 2.2 类的静态成员函数
 
 > #### 什么时候使用静态成员函数？

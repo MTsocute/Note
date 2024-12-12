@@ -278,6 +278,27 @@ void error_handling(char *message) {
 }
 ```
 
+### 1.7 错误的一般处理
+
+```cpp
+void Client::open_chat_box() {
+    // 错误捕捉的范围
+    try {
+        this->chat = new Form(this->socket);
+        chat->show();
+    } 
+    // 任意错误类型的捕捉（可以具体到那种，但是看文档，需要一定的开发经验）
+    catch (const std::exception &e) {
+        // 捕获标准异常并显示详细的错误信息
+        QMessageBox::critical(this, "Error", "打开聊天框时出现错误: " + QString(e.what()));
+    } 
+    catch (...) {
+        // 捕获其他所有异常
+        QMessageBox::critical(this, "Error", "打开聊天框时发生了未知错误！");
+    }
+}
+```
+
 <br>
 
 ## 2. 类
@@ -626,6 +647,60 @@ int main() {
     checkout(&cc);  // 输出：Processing credit card payment
     checkout(&pp);  // 输出：Processing PayPal payment
     return 0;
+}
+```
+
+### 2.7 类成员函数 const 
+
+> 我们的成员函数是可以访问类的成员变量，有了这个 const 声明的成员函数是不可以修改类变量的
+
+```cpp
+class Client : public QWidget {
+public:
+    explicit Client(QWidget *parent = nullptr);
+    ~Client() override;
+
+private slots:
+    // 你会发现所有的成员函数的后面都有 const
+    void clicked_on_connect_button() const;
+    void open_chat_box() const;
+
+private:
+    Ui::Client *ui;
+    Form *chat;
+    QTcpSocket *socket;
+};
+```
+
+### 2.8 父类的如果没有无参的默认构造的继承注意事项
+
+> 在 C++ 中，如果一个子类继承了一个父类，并且父类没有默认构造函数（即没有不带参数的构造函数），那么子类的构造函数确实需要显式地调用父类的构造函数并传递适当的参数。
+
+```cpp
+class Parent {
+public:
+    Parent(int x) { 
+        // 带参数的构造函数
+    }
+};
+
+class Child : public Parent {
+public:
+    // 在实现自己构造的同时并需要实现父类的默认构造函数
+    Child(int x) : Parent(x) {  // 必须显式调用父类构造函数并传递参数
+        // 子类的构造函数
+    }
+};
+
+```
+
+> 所以 `QT` 很多的时候都一个 `parent` 参数
+
+```cpp
+// 继承于 QMainWindow 所以要实现其父类的构造函数传入 parent
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
+    ui->setupUi(this);
+	...
 }
 ```
 

@@ -392,6 +392,92 @@ auto IP = socket->peerAddress().toString(); // 获取客户端地址
 auto PORT = socket->peerPort(); // 获取客户端端口号
 ```
 
+### 8.1 客户端发送内容给服务器
+
+### 8.2 服务端接受发送的内容
+
+## 9. 处理带参自定义信号
+
+```cpp
+class Person : public QObject {
+    Q_OBJECT
+public:
+    explicit Person(QObject * parent = nullptr);
+    ~Person() override = default;
+
+signals:
+    void eat();
+    // 这里重构了一个带参数的信号函数，connect 如何分别两种并处理?
+    void eat(const QString & food);
+};
+```
+
+> 处理方法
+
+```cpp
+// TODO: How to deal with two kinds of signals
+// create two kinds of class function's function pointer
+void (Person::*eat)() = &Person::eat;
+void (Person::*eat_food)(const QString &food) = &Person::eat;
+
+// slot for function with parameter
+void (House::*house_cook)() = &House::do_cook;
+void (House::*house_cook_food)(const QString &food) = &House::do_cook;
+
+// bind slots with corresponding signals
+connect(person, eat, house, house_cook);
+connect(person, eat_food, house, house_cook_food);
+```
+
+## ==10. 关闭窗口默认为关闭的操作==
+
+> 我们打开一个新的窗口的时候保证其一直运行，所以会 new
+>
+> 但是实际上我们关闭 QT 窗口并不会实际关闭，所以 new 类的析构只有等待所有释放了才释放
+>
+> 那么我们如何设置 QT 关闭窗口是真正的关闭呢？
+
+```cpp
+void MainWidget::openSigSlot() {
+    auto * base = new MainWindow(this);
+    base->setAttribute(Qt::WA_DeleteOnClose);   // 关闭窗口就是认为删除
+    base->show();
+}
+```
+
+
+
+## 11. 当一个窗口`A`打开另一个窗口`B`的时候，如何让窗口 `A` 无法被点击
+
+```cpp
+void MainWidget::openSigSlot() {
+    auto * base = new MainWindow(this);
+    base->setAttribute(Qt::WA_DeleteOnClose);   // 关闭窗口就是认为删除
+    base->show();
+    // 当前窗口不可用
+    this->setEnable(false);		// this->setDisable(true);
+}
+```
+
+> 但是上面的也会造成另一个问题，就是就算我们关闭了 B 窗口，但是 A 还是不可以用，所以我们要关闭 B 的时候，让 A 可以用，这里就涉及到了新的信号 `destroyed`
+>
+> **但是别拿这个信号作为释放子窗口内存的方法哈，没用的**
+
+```cpp
+void MainWidget::openSigSlot() {
+    auto *base = new MainWindow;
+    base->setAttribute(Qt::WA_DeleteOnClose);
+    // 如果子窗口关闭通知 MainWidget 窗口
+    connect(base, &QWidget::destroyed, [this]() {
+        this->setEnabled(true);
+    });
+    base->show();
+    this->setEnabled(false);
+}
+```
+
+> 还可以搭配其他的来用 `setVisible()`
+
 
 
 ## Ex. 环境配置
@@ -406,28 +492,36 @@ auto PORT = socket->peerPort(); // 获取客户端端口号
 > - `lib/cmake`：所有头文件所在的位置
 
 ```cmake
-set(QT_PATH "D:/App/QT/6.8.1/mingw_64")
-link_directories("${QT_PATH}/bin")                      # 第三方库的所在位置
-set(CMAKE_PREFIX_PATH "${QT_PATH}/lib/cmake")           # 头文件库的所在位置
+set(CMAKE_PREFIX_PATH "D:/App/QT/6.8.1/mingw_64")
 ```
 
-> 我们一般用这两个方法导入，我们需要的头文件和对应的**源文件**（动态库）
->
-> 但是链接动态文件实际上并没有导入到 `cmake-build-debug`
-
-![image-20241207133555892](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241207133555892.png)
-
-> 解决
+> 解决库 `.dll` 文件的导入问题
 
 ```cmake
-# 将 Qt6Network.dll 复制到目标目录
-add_custom_command(TARGET Server POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${QT_PATH}/bin/Qt6Network.dll"		# 直接塞入 cmake-build-debug
-        $<TARGET_FILE_DIR:Server>)
+# 找包
+find_package(Qt6 COMPONENTS
+        Core
+        Gui
+        Widgets
+        Network
+        REQUIRED
+)
+# 导库  
+target_link_libraries(demo
+        Qt::Core
+        Qt::Gui
+        Qt::Widgets
+        Qt::Network
+)
+# 在 win 的部分写入你需要的库存
+foreach (QT_LIB Core Gui Widgets Network)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            "${QT_INSTALL_PATH}/bin/Qt6${QT_LIB}${DEBUG_SUFFIX}.dll"
+            "$<TARGET_FILE_DIR:${PROJECT_NAME}>")
 ```
 
-### 2. ==编译出来的文件在外部可运行的配置==
+### 2. ==exe 在外部可运行的配置==
 
 > 设置了这些之后我们在外部的 exe 文件才可以独立运行
 
@@ -486,5 +580,6 @@ add_executable(Client
 
 
 
+### 4. 配置 `UI` 文件用 `QT Creator` 打开
 
-
+> https://www.cnblogs.com/xixixing/p/18366910

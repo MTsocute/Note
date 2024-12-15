@@ -181,6 +181,34 @@ htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 
 ![image-20241213165636780](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241213165636780.png)
 
+## 11. PWM 配置
+
+> 使用内部时钟来生成 `PWM` 波
+>
+> 记得不要开启 NVIC Setting
+
+<img src="https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241215204320479.png" alt="image-20241215204320479" style="zoom:77%;" />
+
+> 具体的波形设置，参数为什么这么取可以参照 3.2 部分
+>
+> $PSC: 720-1$
+>
+> $ARR : 100 - 1$
+>
+> $CCR : 20$，这个可以在代码中用参数调整也可以的
+
+![image-20241215204629235](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241215204629235.png)
+
+> `PWM Generation Channel 1` 的参数，这里具体再说明一下
+
+- `Counter Mode` 这个参数影响`CNT`的计数方式
+- `PWM Mode` 这个参数影响比较`CNT`和`Pulse`的比较方式
+    - `mode = 1`时，当 `CNT < Pulse` 时，比较结果为 1、反之为 0
+    - `mode = 2`时，差不多就是比较结果反一反
+- `CH Polarity` 这个参数影响信号输出电平
+    - 设置为 `High` 时，当比较结果为 1 时，输出高电平，结果为 0 时输出低电平
+    - 设置为 `Low` 时则输出电平反一反
+
 # 2. HAL 库函数
 
 ---
@@ -310,6 +338,47 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 | 是否计数 |     不计数，只响应事件     |    可计数，基于外部信号驱动    |
 |  优缺点  |   响应快，适合一次性事件   |  配置复杂，适合周期性信号处理  |
 
+<br>
+### 5. PWM 
+
+> 我们在 `1.基础配置` 的 `11.PWM 配置` 中又说，我们可以把占空比的设置交给代码中实现，我们可以手动要设置
+
+![image-20241215211112025](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241215211112025.png)
+
+配置之后，我们的代码就会生成在对应的 `stm321xx_hal_tim.c` 文件里面，有一个对应的 `HAL_TIM_Start/Stop(...)` 函数了
+
+```c
+// main.c 调用的方法
+HAL_TIM_OC_Start(&htim2, TIM_CHANNEL_1);
+
+// while 部分自己定义占空比
+while {
+   // 使用代码来控制占空比，实现呼吸灯的效果
+    for (int i = 0; i < 100; ++i) {
+        __HAL_TIM_SetCompare(&htim2, TIM_CHANNEL_1, i); 	// 让低电平越来越少
+        HAL_Delay(10);
+    }
+
+    for (int i = 0; i < 100; ++i) {
+        __HAL_TIM_SetCompare(&htim2, TIM_CHANNEL_1, 100-i);
+        HAL_Delay(10);
+    }
+}
+```
+
+> 顺便说一下为什么要延迟 `10 ms` 就是我们完成一个高低变换的周期是 1ms，如果你按照我的配置，这个灯的变换的整个过程 100 也才 `100 ms`，所以变化是非常快的，有延迟的的话，每一次改变占空比的结果至让你看个 `10 ms`，就不会太快
+
+#### 5.1 引脚重分配
+
+> 通过修改这个 REMAP，我们可以实现下面四种通道的GPIO重分配，但是`CHANNEL_1`的GPIO 内外部中断公用
+>
+> [具体改变和更内在的看看这个视频](https://www.bilibili.com/video/BV1pZ421W7hY/?spm_id_from=333.337.search-card.all.click&vd_source=b47817c1aa0db593f452034d53d4273a)
+>
+> 我们的 STM32CUBE 配置更简单，甚至都不需要代码中实现
+
+![image-20241215215859532](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241215215859532.png)
+
+
 # 3. 硬件编码原理
 
 ---
@@ -352,7 +421,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
     - $$
         T_{wave} = \frac{一个波段周期数}{f_{clk}} = \frac{100次}{f_{clk}} \mu s \\
-        f_{PWM} = \frac{1}{T_{wave}}
+        Freq = f_{PWM} = \frac{1}{T_{wave}}
         $$
 
 3. 分辨率就是直接 30 作为 1 $\rightarrow$ 1 / (99+1)
+
+
+
+## 3.2  按参数生成 PWM 波形
+
+> 这里一个周期是 `1ms` 哈
+
+<img src="https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241215202802169.png" alt="image-20241215202802169" style="zoom:122%;" />

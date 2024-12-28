@@ -120,7 +120,7 @@ HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 >
 > 72M / 65536 代表每一个数字的频率，共65536个，每个频率就是72M/65536，然后取倒数就得到计数每一个数的时间。（f=1/T）再乘以 65536 个数字，就得到计数的总时间。
 
-## 8. `OLED `时 `GPIO` 的配置
+## 8. `OLED` 时 `GPIO` 的配置
 
 ```c
 /*Configure GPIO pins : SCL_Pin SDA_Pin */
@@ -206,8 +206,42 @@ htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
     - `mode = 1`时，当 `CNT < Pulse` 时，比较结果为 1、反之为 0
     - `mode = 2`时，差不多就是比较结果反一反
 - `CH Polarity` 这个参数影响信号输出电平
-    - 设置为 `High` 时，当比较结果为 1 时，输出高电平，结果为 0 时输出低电平
+    - 设置为 `High` 时，当比较结果为 1 时，输出高电平，结果为 0 时，输出低电平
     - 设置为 `Low` 时则输出电平反一反
+
+## 12. IC 模式配置
+
+> 我们这里使用 TIM 3 来捕获外部输入(IC)
+>
+> 顺带一提 IO 复用表，我们使用 Channel 1，也就是 PA6，捕获上升沿
+
+![image-20241225113746700](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241225113746700.png)
+
+> 我们要周期重置计数，所以我们需要利用信号和槽的机制，也就是主从模式，于是 CUBE 配置如下
+>
+> 从机模式的打开通道用 FP1，从机模式用于重置计数，选择计数高电平，捕获上升沿（Rising Edge），默认配置就是
+
+![image-20241225120239533](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241225120239533.png)
+
+> 捕获是需要打开全局中断的
+
+![image-20241225120305878](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241225120305878.png)
+
+> **对于 `Counter Period` ，我们这里解释下为什么是最大值，我们知道，这个是 ARR，我们一次计数的事件是 $1\mu s$，所以这个 ARR 相当决定了我们最大的计数时间，防止外部周期时间过长，等不到下一次的上升沿**
+>
+> **对应的最大时间的倒数，就是频率了，也就是说，我们 $f = \frac{1MHz}{65536}$ 就是我们可以测得最大的频率了，更小就不可以了**
+>
+> 所以你可以降低 PSC，然后 1MHz 会变小（除数变大了嘛），然后就可以测更小的频率了
+
+### 1. PWMI 配置
+
+> 为实现我们的 3.4 的 2 PWMI 效果，我们要打开同一个定时器的交叉捕获，存储多个数值
+
+![image-20241225133322284](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241225133322284.png)
+
+### 2. 编码器 配置
+
+
 
 # 2. HAL 库函数
 
@@ -316,7 +350,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 ### 3. TIM 外部时钟中断
 
-> 注意配置之后是 `PA0`，还有时钟频率就是 $8MHz$ 就可以了
+> 注意配置之后是 `PA0`，还有时钟频率就是 8MHz 就可以了
 
 ![image-20241213172427731](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241213172427731.png)
 
@@ -349,7 +383,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 ```c
 // main.c 调用的方法
-HAL_TIM_OC_Start(&htim2, TIM_CHANNEL_1);
+HAL_TIM_OC_Start(&htim2, TIM_CHANNEL_1);	// TIM_CHANNEL for IO remap
 
 // while 部分自己定义占空比
 while {
@@ -368,15 +402,108 @@ while {
 
 > 顺便说一下为什么要延迟 `10 ms` 就是我们完成一个高低变换的周期是 1ms，如果你按照我的配置，这个灯的变换的整个过程 100 也才 `100 ms`，所以变化是非常快的，有延迟的的话，每一次改变占空比的结果至让你看个 `10 ms`，就不会太快
 
-#### 5.1 引脚重分配
+#### 5.1 引脚重分配表
 
-> 通过修改这个 REMAP，我们可以实现下面四种通道的GPIO重分配，但是`CHANNEL_1`的GPIO 内外部中断公用
+> 实现下面四种定时器（或者别的功能）的GPIO重分配
 >
 > [具体改变和更内在的看看这个视频](https://www.bilibili.com/video/BV1pZ421W7hY/?spm_id_from=333.337.search-card.all.click&vd_source=b47817c1aa0db593f452034d53d4273a)
 >
-> 我们的 STM32CUBE 配置更简单，甚至都不需要代码中实现
+> 我们的 STM32CUBE 配置更简单，甚至都不需要代码中实现，只需要开启 TIM，然后选对应引脚打开就好
+>
+> 更多的内容在表的 $8.3.7$ 这个部分
 
 ![image-20241215215859532](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241215215859532.png)
+
+> 你可以在这个启用部分通过 `Channel` 来改变
+
+```cpp
+/**
+  * @brief  Starts the PWM signal generation.
+  * @param  htim TIM handle
+  * @param  Channel TIM Channels to be enabled
+  *          This parameter can be one of the following values:
+  *            @arg TIM_CHANNEL_1: TIM Channel 1 selected
+  *            @arg TIM_CHANNEL_2: TIM Channel 2 selected
+  *            @arg TIM_CHANNEL_3: TIM Channel 3 selected
+  *            @arg TIM_CHANNEL_4: TIM Channel 4 selected
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_TIM_PWM_Start(TIM_HandleTypeDef *htim, uint32_t Channel)
+```
+
+### 6. IC 
+
+> `HAL_TIM_IC_CaptureCallback()` 这个函数会在每次捕获事件之后进行操作，也就是我们的槽函数本体，对于其内部的执行的逻辑，我们可以重写来重定义我们想要的结果
+>
+> 其捕捉的信号，我们在 CUBE 也配置过了，就是上升沿
+>
+> 由于我们想要计算出捕获信号的频率，所以我们需要重写这个部分
+
+```cpp
+int32_t freq;
+// 这个函数的定义在 `stm32f1xx_hal_tim.h` 中
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim) {
+    // 只捕捉 TIM 3 的上升沿
+    if (htim->Instance == TIM3) {
+        uint32_t capture = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
+        freq = 1e6 / capture;
+    }
+}
+```
+
+> 初始化开启 IC
+
+```cpp
+HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_1);        // Initialize IC
+```
+
+> 多个通道记得打开其他的通道的中断
+
+```cpp
+// HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_2);        // Initialize IC
+// 更好的方案，如果有多个的话
+HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_ALL);
+```
+
+- 对于高电平的部分，是否转到低电平，我们可以根据哪个通道激活来判断
+- 通道的激活本身就设立了对高低沿检测，所以正好
+
+```cpp
+uint32_t freq, Duty, highCNT, period;
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim) {
+    if (htim->Instance == TIM3) {
+        // 只捕捉 TIM 3 的上升沿
+        if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1) {
+            period = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1) + 1;
+            freq = 1e6 / period;
+        }
+        // 只捕捉 TIM 3 下降沿
+        else if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2) {
+            highCNT = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2) + 1;
+            // 算出占空比
+            Duty = highCNT * 100 / period;
+        }
+    }
+}
+```
+
+### 7. Encode
+
+> 其实没啥好说的，主要就是这个部分
+
+```cpp
+HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_1); // Initialize IC
+HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_2); // Initialize IC
+
+OLED_ShowString(2, 1, "CNT:");
+
+while (1) {
+    OLED_ShowSignedNum(2, 5, (int16_t) __HAL_TIM_GET_COUNTER(&htim3), 5);
+    HAL_Delay(100);
+}
+```
+
+
 
 
 # 3. 硬件编码原理
@@ -411,19 +538,18 @@ while {
 
 <img src="https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241213192832139.png" alt="image-20241213192832139" style="zoom:67%;" />
 
-1. 占空比：总时间为 99，然后我们变化到低电平的时间是 30，所以是 30 / (99 + 1)
+1. 占空比：总时间为 99，高电平占用的计数是 30，所以是 30 / (99 + 1)
 
 2. 频率：
 
-    - 假定计数器的时钟频率是：$f_{clk} = 72\, \text{MHz}$，$T_{wave}$ 完成一个波形花费的时间
+    - 假定计数器的时钟频率是：$f_{clk} = 72\, \text{MHz}$，`PSC =71`用于化整频率
 
-    - PWM 的频率就是计数器的更新频率（完成一次高低变换需要的时间）
+    - PWM 的频率就是完成一次 ARR 所需要的频率单位时间
 
     - $$
-        T_{wave} = \frac{一个波段周期数}{f_{clk}} = \frac{100次}{f_{clk}} \mu s \\
-        Freq = f_{PWM} = \frac{1}{T_{wave}}
+        Freq = \frac{\frac{f_{clk}}{PSC + 1}}{ARR + 1}
         $$
-
+    
 3. 分辨率就是直接 30 作为 1 $\rightarrow$ 1 / (99+1)
 
 
@@ -433,3 +559,117 @@ while {
 > 这里一个周期是 `1ms` 哈
 
 <img src="https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241215202802169.png" alt="image-20241215202802169" style="zoom:122%;" />
+
+## 3.3 舵机 PWM 控制原理
+
+> 舵机的先对应的接口关系
+
+![image-20241216133327340](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241216133327340.png)
+
+> 占空比和旋转角度的关系
+
+<div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+    <img src="https://i-blog.csdnimg.cn/blog_migrate/8487efa01529a2b26ce8e2aadd58f7f3.png" alt="img" style="width: 49%;"/>
+    <img src="https://i-blog.csdnimg.cn/blog_migrate/318656994c810caec4dbade7ec889493.gif" alt="img" style="width: 49%;"/>
+</div>
+
+
+### 1. 参数配置
+
+> 舵机的 PWM 必须是 `20 ms`（`50Hz`），高平电的宽度必须在 `0.5~2.5 ms (2.5%~12.5%)` 之间，所以这个就直接的确定了我们的占空比和频率，由此我们计算出对应的参数，`CK_PSC = 72M`
+>
+> 1. $Freq = \frac{CK\_PSC}{PSC + 1} \times (ARR+1) = 50Hz$，也可以直接算时间来算 ARR
+> 2. $Duty = \frac{CRR}{ARR + 1} \times100 = 2.5 \to 12.5$
+>
+> 确定我们参数 ARR = 20000，CRR = 500 ~ 2500（也可以再代码中调试）
+>
+> 同时我们没有 IO 复用所以看对应的 PWM 5.1 表，打开对应的 PA1 开启通道 2
+
+![image-20241216142104604](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241216142104604.png)
+
+## 3.4  输入捕获
+
+> 因为第一时间存储到的是cache，所以程序读取时间是存储的，我们不需要那么着急去马上读取计数器里面的值
+
+<img src="https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241225092204464.png" alt="image-20241225092204464" style="zoom:67%;" />
+
+### 1. 频率测量的方法
+
+![image-20241225101839273](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241225101839273.png)
+
+- 第一种方法就是左边的部分，我们指定一个时间长度 T，测这个时间内的高频次数，然后用次数除以对应 T，然后就可以得到频率了
+- 第二种方法就是两个上升沿之间持续的时间，然后取倒数，然后因为，我们的计算持续时间的方法就是计数器，所以我们单位时间其实是 $\frac{1}{f_c}$，知道多少次计数（N），我们就可以知道持续时间为 $\frac{N}{f_c}$，取倒数就是频率
+
+> 上面两个信号试用的范围比较狭隘，一个对于周期短(高频)的好，一个对于周期长(低频)的好，对于周期不定长的
+>
+> 这就涉及到一个问题，对于不同的情况，我们选用不同的方法，**可是多高算高算低啊？**
+>
+> 于是就有上面第三个算法
+
+- 第三种方法的推导：
+    $$
+    \begin{align*}
+    & \frac{N}{T} = \frac{f_c}{N} \\
+    & N^2 = f_c \times T \\
+    & f_m = \frac{N}{T} = \sqrt{\frac{f_c}{T}} 
+    \end{align*}
+    $$
+    
+
+### 2. PWMI
+
+> 我们需要存储两个数值，占空比和频率，但是一个 TIM 的 cache 只有一个
+>
+> 要存储两个数据必须要有两个存储器，那么我们可以借用别人的存储器，来存储数据，所以就有了 FP 这个线路来用别人的存储器
+>
+> 对应的我们需要在代码中配置这个交叉模式，具体看配置部分
+
+![image-20241225111727135](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241225111727135.png)
+
+> 我们实现占空比的原理就是计一个周期内的高平计数，然后到低平马上保留那个数到寄存器，也就是这里的 CCR2 = CNT
+
+![image-20241225133506086](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241225133506086.png)
+
+### ==3. 主从模式==
+
+> 先解释下，为什么我们要使用这个模式，首先我们的测量使用的周测法，所以我们希望记录下一个周期需要清空计数器
+>
+> 就是下面的 CNT = 0
+
+![image-20241225114304544](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241225114304544.png)
+
+> 那我们是如何自动实现这个清楚的呢？就是依靠下面这个电路。
+>
+> 也不需要知道太多，就是知道有这个通道所以有主从模式就行，后面主从模式是啥才比较重要些
+>
+> 还有那个 `T1FP1`
+
+<img src="https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241225114653307.png" alt="image-20241225114653307" style="zoom:80%;" />
+
+> 先看下主从模式的图表
+>
+> 这个和 QT 的信号和槽机制如出一辙，主模式的信号通过 TRGO 传递出去，然后从模式相当于就是槽函数执行具体的操作 
+
+![image-20241225114756972](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241225114756972.png)
+
+> 比较有趣的是，Channel 3 和 4 还没有从模式，他们没有 XOR
+
+![image-20241225132549566](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241225132549566.png)
+
+### 4. 编码器
+
+> 先来看如何开启编码器，是的我们还是可以用这两个触发器来触发，然后我们再使用两个通道来使用 TIM 就可以获取两个数值的变化
+>
+> [具体详细看这个视频](https://www.bilibili.com/video/BV1im42137c2/?spm_id_from=333.337.search-card.all.click&vd_source=b47817c1aa0db593f452034d53d4273a)
+
+![image-20241225140451822](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241225140451822.png)
+
+> 我们记录到的两个数据就是下面的两个图，在介绍这个图相位对应的实际含义之前，我们先看下硬件的部分
+
+<img src="https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241225140302288.png" alt="image-20241225140302288" style="zoom:67%;" />
+
+> 旋钮数据输出的接口
+
+![image-20241225140806956](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241225140806956.png)
+
+<br>

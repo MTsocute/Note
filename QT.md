@@ -131,6 +131,36 @@ connect(ui->brosewButton, &QPushButton::clicked,
    );
 ```
 
+### ==2.4 伪闭包== 
+
+> 我们按照以 `connect` 为例
+
+```cpp
+// this 传入
+QObject::connect(reply, &QNetworkReply::finished, [this, reply](){
+    emit this->sig_http_finish(req_id, "", ErrorCodes::ERR_NETWORK, mod);
+    reply->deleteLater();
+});
+```
+
+> 其实在信号和槽中，如果直接使用 `this` 指针，将会存在潜在的空指针问题，这个 this 实际上成为了一个空指针，再次使用程序就直接崩溃
+>
+> 为了防止这个问题，我们就是用 shared_from_this 方法，你可以理解为造了两个 this，传入的是赋值的，那么 `share_ptr` 计数就是 2，少了一个也没不会提前释放
+
+```cpp
+// 你当前用的这个类，必须得继承 enable_shared_from_this<>
+class A : public enable_shared_from_this<A> {
+    auto self = shared_from_this();
+    // 正确处理, self 传入
+    QObject::connect(reply, &QNetworkReply::finished, [reply, self, req_id, mod](){
+        emit self->sig_http_finish(req_id, "", ErrorCodes::ERR_NETWORK, mod);
+        reply->deleteLater();
+});
+}
+```
+
+
+
 ## 3. `LineEdit`
 
 ---
@@ -144,14 +174,28 @@ connect(ui->brosewButton, &QPushButton::clicked,
 ui->displayLine->setText(expression);	// displayLine 就是我们的 LineEdit
 ```
 
+### 3.2 输入内容的模式
+
+> `QLineEdit` 提供了四种主要的输入模式，分别是：
+>
+> 1. **`Normal`**: 正常显示输入的文本。
+> 2. **`NoEcho`**: 输入的文本不显示。
+> 3. **`Password`**: 输入的字符显示为掩码符号。
+> 4. **`PasswordEchoOnEdit`**: 输入时为掩码，失去焦点后显示实际字符
+
 ## 4. `PushButton`
 
 ---
 
 ### 4.1 `PushButton `改变背景色
 
-```cpp 
-```
+> 我们的 QT Designer 里面可以设置一些 CSS 来改变当前的构建
+
+![image-20241213200531822](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241213200531822.png)
+
+> 在弹出来的页面，我们书写对应的 CSS 语法即可
+
+![image-20241213200608122](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241213200608122.png)
 
 ## 5. `QTimer`
 
@@ -254,6 +298,15 @@ else {
 }
 ```
 
+> 图片还特殊些，所以我们这里记录一下
+
+```cpp
+    auto path = QFileDialog::getOpenFileName(this, "打开图片", imagePath,
+        tr("Images(*.png *.jpg *.bmp *jpeg)"));	// 注意看 tr 里面的内容是 Images 哈
+```
+
+
+
 ### 6.3 读取文件的内容
 
 ```cpp
@@ -302,6 +355,10 @@ if (fileName.isEmpty()) {
 }
 ```
 
+### 6.5 使用手册查找系统定义文件的路径
+
+![image-20241216174648925](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241216174648925.png)
+
 <br>
 
 ## 7. QT `Event()`
@@ -310,9 +367,11 @@ if (fileName.isEmpty()) {
 
 > 在 UI 界面的类函数创建一个键盘事件的触发函数
 >
-> 事件触发的类型非常的多，具体的话，还是去看文档哈c
+> 事件触发的类型非常的多，具体的话，还是去看文档哈
 
 ```cpp
+#include <QKeyEvent>
+
 class MainWindow : public QMainWindow {
     Q_OBJECT
 
@@ -398,6 +457,8 @@ auto PORT = socket->peerPort(); // 获取客户端端口号
 
 ## 9. 处理带参自定义信号
 
+> 自定义的信号要靠着 emit 函数来触发，譬如说：`emit this->eat();`
+
 ```cpp
 class Person : public QObject {
     Q_OBJECT
@@ -413,6 +474,8 @@ signals:
 ```
 
 > 处理方法
+>
+> 我们建立两个对象的类方法成员函数指针，然后再 `connet` 实例和对应的函数指针实现绑定
 
 ```cpp
 // TODO: How to deal with two kinds of signals
@@ -445,8 +508,6 @@ void MainWidget::openSigSlot() {
 }
 ```
 
-
-
 ## 11. 当一个窗口`A`打开另一个窗口`B`的时候，如何让窗口 `A` 无法被点击
 
 ```cpp
@@ -478,6 +539,101 @@ void MainWidget::openSigSlot() {
 
 > 还可以搭配其他的来用 `setVisible()`
 
+## 12. 如何让一个窗口显示到最前面
+
+> 譬如说前面的隐藏操作，在显示的时候就会遇到藏在最后面的问题，这个可以解决那个问题
+
+```cpp
+setWindowState((windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
+raise(); // for MacOS
+activateWindow(); // for Windows
+```
+
+## 13. `OpenCV` 
+
+---
+
+### 1. OpenCV 如何解决中文路径文件打开问题
+
+```cpp
+this->m_scr_image = cv::imread(path.toLocal8Bit().toStdString());
+```
+
+### 2. 通过 cv::Mat 获取的图片转换 `QImage`
+
+```cpp
+const auto &image = QImage(
+    result_Array.data,
+    result_Array.cols, result_Array.rows,			// 这里不多说，就是获取 图片矩阵的大小
+    result_Array.channels() * result_Array.cols(),	 // RBG 有三个色块，然后一列 * 三个色块，才是这一列的具体大小
+    QImage::Format_RGB888
+);
+
+// 显示图片在 label 里面
+label->setPixmap(QPixmap::fromImage(image));
+```
+
+### 3. 根据其他对象的大小修改合适的比例
+
+```cpp
+QImage ImageWidget::imageCenter(const QImage &image, QLabel *label) {
+    QImage temp;
+    QSize imageSize = image.size();
+    QSize labelSize = label->size();
+
+    // 通过他们的比例来缩放
+    double widthRadio = static_cast<double>(imageSize.width()) / labelSize.width();
+    double heightRadio = static_cast<double>(imageSize.height()) / labelSize.height();
+    
+    // 图片缩放比例，只可以有一个标准，所以我们让比较大的作为整体缩放尺度
+    if (widthRadio > heightRadio) {
+        temp = image.scaledToWidth(label->width());
+    }
+    else {
+        temp = image.scaledToHeight(label->height());
+    }
+    return temp;
+}
+```
+
+> 但是这个涉及到一个问题，就是他只会在图片载入的时候调整大小，如果我们拖动了窗就还是那么大小，**希望动态的改变大小的话**，我们就需要 `resize` 这个事件（event）
+>
+> 记得给设定最小尺寸，对于多空间排布是有好处的
+
+
+
+## 14. `QSettings`
+
+> `QSettings` 是 Qt 提供的一个功能强大的类，用于存储和检索应用程序的配置信息，例如用户设置、窗口布局、应用状态等。它支持跨平台的持久化配置存储，可以将数据保存到多种后端存储中（如 Windows 注册表、INI 文件、JSON 等），并在程序启动时轻松恢复这些设置
+
+### 1. 初始化一个配置文件 ini
+
+```cpp
+// 前面的部分就是自动找到 QT 所在的运行路径
+auto path = qApp->applicationDirPath() + this->CONFIG_FILE_NAME;
+// 如果你传入 this 的话，那么就不需要再析构函数里面释放了
+this->m_pIniSet = new QSettings(path, QSettings::IniFormat, this);	// 创建一个 ini 的操作类实例
+```
+
+### 2. `QSettings.value() `读取配置
+
+> - `"LastPath"` 是键名，用来标识配置文件中的一个数据项
+> -  `"path"` 是默认值。如果配置文件中没有 `LastPath`，就会返回 `path`，没写就返回 "" 空串
+>
+> 这个函数用于读键返回的值和 `json` 一个道理的
+
+```cpp
+this->m_lastPath = m_pIniSet->value("LastPath", path).toString();
+```
+
+### 3. `QSettings.setValue()` 创建键值对
+
+```cpp
+// 写入配置
+settings.setValue("username", "Momo");
+settings.setValue("age", 30);
+```
+
 
 
 ## Ex. 环境配置
@@ -485,17 +641,6 @@ void MainWidget::openSigSlot() {
 ---
 
 ### 1. `CMakeLists.txt` 配置
-
-> `QT` 所有需要的 `dll`和 `xxx.h` 都在 `D:/App/QT/6.8.1/mingw_64` 的两个目录下
->
-> - `bin`：所有 `dll `所在的位置
-> - `lib/cmake`：所有头文件所在的位置
-
-```cmake
-set(CMAKE_PREFIX_PATH "D:/App/QT/6.8.1/mingw_64")
-```
-
-> 解决库 `.dll` 文件的导入问题
 
 ```cmake
 # 找包
@@ -578,8 +723,40 @@ add_executable(Client
 )
 ```
 
+### 4. 外部第三方库导入方法
 
+- 我们使用的 VS 的MSVC 的编译环境和对应的配置
 
-### 4. 配置 `UI` 文件用 `QT Creator` 打开
+- VCPKG 管理第三方库的安装，版本都是 x64-windows
 
-> https://www.cnblogs.com/xixixing/p/18366910
+- ```cmd
+    # 记得使用下面命令，集成化管理库
+    vcpkg integrate install
+    ```
+
+> `Clion`
+
+![image-20241217184325236](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241217184325236.png)
+
+> `CMake optitions` 里面的内容
+
+```cpp
+-DCMAKE_TOOLCHAIN_FILE=D:\vcpkg\scripts\buildsystems\vcpkg.cmake
+-DCMAKE_CXX_FLAGS="/utf-8"
+```
+
+> `QT Creator` 里面的内容
+
+![image-20241217184501535](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241217184501535.png)
+
+### 5. Qt6 如何导入自己的库
+
+> https://blog.csdn.net/m0_61629312/article/details/133445578
+
+```cpp
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Network)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Network)
+
+target_link_libraries(ChatRoom PRIVATE Qt${QT_VERSION_MAJOR}::Network)   
+```
+

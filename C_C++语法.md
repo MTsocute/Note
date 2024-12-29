@@ -674,7 +674,7 @@ private:
 
 ### 2.8 父类的如果没有无参的默认构造的继承注意事项
 
-> 在 C++ 中，如果一个子类继承了一个父类，并且父类没有默认构造函数（即没有不带参数的构造函数），那么子类的构造函数确实需要显式地调用父类的构造函数并传递适当的参数。
+> 在 C++ 中，如果一个子类继承了一个父类，并且父类没有默认构造函数（即只有带参的构造函数），那么子类的构造函数确实需要显式地调用父类的构造函数并传递适当的参数。
 
 ```cpp
 class Parent {
@@ -694,13 +694,95 @@ public:
 
 ```
 
-> 所以 `QT` 很多的时候都一个 `parent` 参数
+> 所以 `QT` 很多的时候都一个 `parent` 参数==
 
 ```cpp
 // 继承于 QMainWindow 所以要实现其父类的构造函数传入 parent
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
 	...
+}
+```
+
+### ==2.9 `构造/析构` 在不同环境下的影响==
+
+> 在 C++ 中，构造函数和析构函数的访问权限（`public`、`protected`、`private`）决定了**谁能创建或销毁对象**。
+>
+> ### **访问权限的影响：**
+>
+> - `public` 构造/析构函数：
+>     - **任何地方**都可以创建或销毁对象。
+> - `protected` 构造/析构函数：
+>     - **类内部和子类**可以创建或销毁对象，但类外部无法直接创建或销毁。
+> - `private` 构造/析构函数：
+>     - **只有类自身**可以创建或销毁对象，**外部和子类都无法直接创建或销毁对象**。
+>
+> ### **总结：**
+>
+> - `public` 构造/析构函数：默认方式，外部可以直接创建和销毁对象。
+> - `protected` 构造/析构函数：只允许子类或内部创建，外部不能直接操作。
+> - `private` 构造/析构函数：外部完全不能创建或销毁对象，常用于**单例模式**或**工厂方法**模式。
+> - **析构函数设为 `private` 时，要小心内存泄漏问题**，需要提供类内部的释放机制（例如静态方法）。
+
+#### 1. **`protected` 构造函数**（子类可以创建，但类外不能）
+
+```cpp
+class A {
+protected:
+    A() { cout << "A 的构造函数" << endl; }
+};
+
+class B : public A {
+public:
+    B() { cout << "B 的构造函数" << endl; }
+};
+
+int main() {
+    // A a;  // 错误，无法直接创建 A 的对象
+    B b;  // 但是可以通过子类 B 创建
+    return 0;
+}
+```
+
+#### 2. **`private` 构造函数**（无法创建对象，只能内部创建）
+
+> 常用于单例模式，确保创建的对象唯一的手段
+
+```cpp
+class A {
+private:
+    A() { cout << "A 的构造函数" << endl; }
+
+public:
+    static A create() {  // 提供静态函数间接创建对象
+        return A();
+    }
+};
+
+int main() {
+    // A obj;  // 错误，无法直接创建 A
+    A obj = A::create();  // 可以通过静态函数创建
+    return 0;
+}
+```
+
+#### 3. `private` 析构函数
+
+> 常用于单例模式或禁止外部删除对象
+
+```cpp
+class A {
+private:
+    ~A() { cout << "A 的析构函数" << endl; }
+
+public:
+    static A* create() { return new A(); }
+};
+
+int main() {
+    A* obj = A::create();
+    // delete obj;  // 错误！析构函数是 private，无法 delete
+    return 0;
 }
 ```
 
@@ -910,7 +992,7 @@ int main() {
 >
 > ### **饿汉模式（Eager Initialization Singleton）**
 >
-> 在饿汉模式下，实例在程序启动时就**立即**被创建，不管后面是否会用到。这种方式可以避免多线程问题，因为实例在程序一开始就存在。
+> 在饿汉模式下，实例在程序启动时就**立即**被创建，不管后面是否会用到。**这种方式可以避免多线程问题，因为实例在程序一开始就存在。**
 
 ```c++
 class log {
@@ -937,9 +1019,90 @@ public:
         return _log;
     }
 private:
-	log() = default;
+	log() = default;	// 这里如果考虑继承的话，最好放在 protect 下面，防止子类无法构造父类
 };
 ```
+
+### 3.3 CRTP 机制
+
+> 这个机制就是，即便我们当下类还没写好，我们其实可以把它作为模板参数传递了
+>
+> 下面的 singleton 是一个模板类，模板参数就是我们构造类的自己
+
+```cpp
+// CRTP：虽然说虽然说我们的 HttpManger 还没有写好，但是我们可以把自己作为模板参数类型传递了
+class HttpManger : public QObject, public singleton<HttpManger> {
+	// ...
+};
+```
+
+### 3.4 类模板单例模式和对应的问题
+
+---
+
+#### 1. 类模板单例模式
+
+```cpp
+template<class T>
+class singleton {
+protected:
+    singleton() = default;
+    // 单例设计模式
+    singleton(const singleton<T> &) = delete;
+    singleton &operator=(const singleton<T> &) = delete;
+
+    static std::shared_ptr<T> _instance; // 使用是这一个实例
+
+public:
+    // 防止多线程的时候，初始化的单例不唯一，使用懒汉模式
+    static std::shared_ptr<T> getInstance() {
+        static std::once_flag flag;
+        std::call_once(flag, [&]() {
+            if (_instance == nullptr) {
+                _instance = std::make_shared<T>();
+            }
+        });
+        return _instance;
+    }
+
+    void printAddress() { std::cout << _instance.get() << std::endl; }
+
+    ~singleton() { std::cout << "this is singleton destruct" << std::endl; }
+};
+
+
+// 初始化，单例模式的构造函数是防止外部使用的，所以我们初始化比较特殊
+template<class T>
+std::shared_ptr<T> singleton<T>::_instance = nullptr;
+```
+
+#### 2. 类模板单例模式的继承问题
+
+> 我们先看一个继承了单例模式的 CRTP 机制的案例
+>
+> 单例模式的析构函数在 private 下面的，所以根据 2.9 我们知道，单例模式的释放其实都是依靠别的方法的
+>
+> 我们没有给单例模式静态的释放方法，所以我们的释放基本是绑定子类的析构的，如果你子类的析构都是私有，那么这个单例类是彻底是释放不掉了
+
+```cpp
+// 这里的 singleton 
+class HttpManger : public QObject, public singleton<HttpManger> {
+public:
+    ~HttpManger();	// 要注意这里的析构必须是公有的，因为父类的析构在 private 下
+private:
+    HttpManger();	// 父类的构造在 protect 可以访问到
+};
+```
+
+> 我们子类的构造函数是存放在 private 下面的，问题处在父类的这个代码里面
+
+```cpp
+_instance = std::make_shared<T>(new T);
+```
+
+> `new T` 的时候 T 是 httpManger，会使用子类的构造函数，但是子类的构造函数是存储在 private 下面的，所以需要使用 friend 让父类可以访问到构造函数
+
+
 
 ## 4. 文件操作
 

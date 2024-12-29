@@ -2,6 +2,12 @@
 
 # `STM 32` 杂项笔记
 
+笔记本非常的杂乱，前期是了别翻阅文件拷贝相同代码而用的，所以有点乱，现在主要分成三块
+
+1. 实现某功能如何配置 GPIO 
+2. 实现所需功能使用对应的 HAL 的库
+3. 实现这个功能所需要的基本原理，主要是为了告诉参数是对应什么，不会太深入
+
 # 1. 基础配置
 
 ---
@@ -74,15 +80,7 @@ GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 ```
 
-## 4. GIPO 开漏和推挽模式的区别
 
-> 在推挽模式下面，我们的高低电平都有驱动能力
->
-> 但是开漏模式下面，不太一样，只有**低电平**有驱动能力
->
-> **所以如果你希望有更好的控制，应该设置成开漏模式**
-
-![image-20241201213834232](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241201213834232.png)
 
 ## 5.GPIO 脚针的 PIN 口的定义
 
@@ -111,14 +109,6 @@ HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 ## 6. Debug 文件配置
 
 ![image-20241206180242134](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241206180242134.png)
-
-## 7. 事件的计算
-
-> 执行 72 次任务，然后我们的最大时钟是 $72MHz$，所以执行 72 次任务就是需要 $1\mu s = 10^{-6} s$ 时间
->
-> 最大定时时间的计算
->
-> 72M / 65536 代表每一个数字的频率，共65536个，每个频率就是72M/65536，然后取倒数就得到计数每一个数的时间。（f=1/T）再乘以 65536 个数字，就得到计数的总时间。
 
 ## 8. `OLED` 时 `GPIO` 的配置
 
@@ -241,7 +231,35 @@ htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 
 ### 2. 编码器 配置
 
+<br>
 
+## 13. AD 转换
+
+---
+
+### 1. 引脚的配置
+
+![image-20241228164159722](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241228164159722.png)
+
+> `ADC Settings` 的部分
+>
+> - Data Alignment：数据的对齐
+> - Scan Conversion：是否支持多通道
+> - Continuous Conversion：转换后是否自动转换
+>
+> `ADC_Regular_ConversionMode` 的部分
+>
+> - Number of Conversion：读取数据的通道的数目
+
+![image-20241228165147384](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241228165147384.png)
+
+### 2. 时钟频率的设置
+
+> ![image-20241228165425521](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241228165425521.png)
+
+![image-20241228165317275](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241228165317275.png)
+
+> 所以我们需要分频器，让我们的频率 < 14 MHz
 
 # 2. HAL 库函数
 
@@ -503,8 +521,80 @@ while (1) {
 }
 ```
 
+## 2.3 ADC 
 
+> 校正 ADC
 
+```cpp
+HAL_ADCEx_Calibration_Start(&hadc1);
+```
+
+> 读取 ADC 的函数（）
+
+### 1. 单次非扫描
+
+```cpp
+uint16_t Ret;
+HAL_StatusTypeDef HalState;
+uint16_t StartAndGetOneResult() {
+    HAL_ADC_Start(&hadc1);                          	// 1. 启动 ADC，在 whlie 部分不断再启动
+    HalState = HAL_ADC_PollForConversion(&hadc1, 10); 	// 2. 等待 ADC 转换完成 (最多等待10ms)
+
+    if (HalState == HAL_OK) {                         // 3. 如果转换成功
+        Ret = HAL_ADC_GetValue(&hadc1);               // 4. 读取 ADC 转换结果
+    } else {
+        Ret = 0;                                      // 5. 转换失败，返回 0
+    }
+    return Ret;                                       // 6. 返回 ADC 结果
+} 
+```
+
+### 2. 连续非扫描
+
+> 只需要开始一次，也不需要判断转换完成与否，因为我们不需要等待了，转换之后就马上下一次了，判断的逻辑就完全去掉
+>
+> 甚至都不需要下面的函数的
+
+```cpp
+HAL_ADC_Start(&hadc1);      // 执行一次就可以了，后面会自动来的
+while (1) {
+    ADValue = HAL_ADC_GetValue(&hadc1); // 获取读取到的 AD 值
+}
+```
+
+### 3. 单次非扫描多通道
+
+> 你可会好奇，为什么非扫描可以实现多通道
+>
+> 我们知道**多通道扫描是要扫描完全部通道之后，才会触发 EOC 表示 AD 转换完成**，但是没有 DMA的存在，当你读完最后一个通道的时候，前面的数据早就被覆盖了
+>
+> 想单一的多通道读取，他也不会完成一个扫描告诉你读完了，所以我们采用单次，读完一个扫描一个新的通道读取数据
+
+```cpp
+uint16_t StartAndGetOneResult(uint32_t adc_channel) {
+    ADC_ChannelConfTypeDef sConfig = {0};
+    sConfig.Channel = adc_channel; // 转换我们指定的管道
+    sConfig.Rank = ADC_REGULAR_RANK_1;
+    sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+    // 重新分配 channel
+    if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) {
+        return 0;
+    }
+
+    HAL_ADC_Start(&hadc1);
+    const HAL_StatusTypeDef result = HAL_ADC_PollForConversion(&hadc1, 10);
+
+    if (result == HAL_OK) {
+        return HAL_ADC_GetValue(&hadc1);
+    }
+    return 0;
+}
+
+// 读取
+const uint16_t AD1 = StartAndGetOneResult(ADC_CHANNEL_0);
+const uint16_t AD2 = StartAndGetOneResult(ADC_CHANNEL_1);
+const uint16_t AD3 = StartAndGetOneResult(ADC_CHANNEL_2);
+```
 
 # 3. 硬件编码原理
 
@@ -554,13 +644,13 @@ while (1) {
 
 
 
-## 3.2  按参数生成 PWM 波形
+#### 3.1  按参数生成 PWM 波形
 
 > 这里一个周期是 `1ms` 哈
 
 <img src="https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241215202802169.png" alt="image-20241215202802169" style="zoom:122%;" />
 
-## 3.3 舵机 PWM 控制原理
+#### 3.2 舵机 PWM 控制原理
 
 > 舵机的先对应的接口关系
 
@@ -574,7 +664,7 @@ while (1) {
 </div>
 
 
-### 1. 参数配置
+##### 1. 参数配置
 
 > 舵机的 PWM 必须是 `20 ms`（`50Hz`），高平电的宽度必须在 `0.5~2.5 ms (2.5%~12.5%)` 之间，所以这个就直接的确定了我们的占空比和频率，由此我们计算出对应的参数，`CK_PSC = 72M`
 >
@@ -587,7 +677,7 @@ while (1) {
 
 ![image-20241216142104604](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241216142104604.png)
 
-## 3.4  输入捕获
+## 3.2  输入捕获
 
 > 因为第一时间存储到的是cache，所以程序读取时间是存储的，我们不需要那么着急去马上读取计数器里面的值
 
@@ -595,7 +685,7 @@ while (1) {
 
 ### 1. 频率测量的方法
 
-![image-20241225101839273](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241225101839273.png)
+<img src="https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241225101839273.png" alt="image-20241225101839273" style="zoom:60%;" />
 
 - 第一种方法就是左边的部分，我们指定一个时间长度 T，测这个时间内的高频次数，然后用次数除以对应 T，然后就可以得到频率了
 - 第二种方法就是两个上升沿之间持续的时间，然后取倒数，然后因为，我们的计算持续时间的方法就是计数器，所以我们单位时间其实是 $\frac{1}{f_c}$，知道多少次计数（N），我们就可以知道持续时间为 $\frac{N}{f_c}$，取倒数就是频率
@@ -673,3 +763,79 @@ while (1) {
 ![image-20241225140806956](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241225140806956.png)
 
 <br>
+
+## 3.5  GIPO 开漏和推挽模式的区别
+
+> 在推挽模式下面，我们的高低电平都有驱动能力
+>
+> 但是开漏模式下面，不太一样，只有**低电平**有驱动能力
+>
+> **所以如果你希望有更好的控制，应该设置成开漏模式**
+
+![image-20241201213834232](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241201213834232.png)
+
+## 3.6 时间的计算
+
+> 执行 72 次任务，然后我们的最大时钟是 `72MHz`，所以执行 72 次任务就是需要 $1\mu s = 10^{-6} s$ 时间
+>
+> **最大定时时间的计算**：`f = 72M / 65536` 代表每一个数字的频率，然后取倒数就得到计数每一个数的时间。
+
+## 3.7 AD 转换
+
+> 模拟信号，他是连续的型号，这些信号就比如说电压的变化，温度的变化，这种自然现象转换到我们用数值取衡量的过程，对于如何测，不是我们考虑的，我们考虑的是如何把测出来的数据读出来
+>
+> DA 转换这个一般使用场景比较少，PWM 就可以做到，就是用数字信号生成模拟信号的样子，就是用数值取模拟波的形式
+
+![image-20241228160734602](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241228160734602.png)
+
+### 1. 数字信号转换的模式和存储方式
+
+![image-20241228160228142](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241228160228142.png)
+
+> 左右是因为，我们读取存进来的数据站不满 16，所以总要空 4 位，要么左，要么右
+
+### 2. STM 的 ADC 通道对应的引脚
+
+| **通道** |   **ADC1**   | **ADC2** | **ADC3** |
+| :------: | :----------: | :------: | :------: |
+|  通道0   |     PA0      |   PA0    |   PA0    |
+|  通道1   |     PA1      |   PA1    |   PA1    |
+|  通道2   |     PA2      |   PA2    |   PA2    |
+|  通道3   |     PA3      |   PA3    |   PA3    |
+|  通道4   |     PA4      |   PA4    |   PF6    |
+|  通道5   |     PA5      |   PA5    |   PF7    |
+|  通道6   |     PA6      |   PA6    |   PF8    |
+|  通道7   |     PA7      |   PA7    |   PF9    |
+|  通道8   |     PB0      |   PB0    |   PF10   |
+|  通道9   |     PB1      |   PB1    |          |
+|  通道10  |     PC0      |   PC0    |   PC0    |
+|  通道11  |     PC1      |   PC1    |   PC1    |
+|  通道12  |     PC2      |   PC2    |   PC2    |
+|  通道13  |     PC3      |   PC3    |   PC3    |
+|  通道14  |     PC4      |   PC4    |          |
+|  通道15  |     PC5      |   PC5    |          |
+|  通道16  |  温度传感器  |          |          |
+|  通道17  | 内部参考电压 |          |          |
+
+### 3. 硬件电路
+
+![image-20241228162126363](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241228162126363.png)
+
+> 简图
+
+![image-20241228162152945](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241228162152945.png)
+
+- 看图你就会发现如果通过注入通道读取到的数据是可以存在4个16位的寄存器中的
+- 规则通道只有一个寄存器，所以如果转换的数据不想被覆盖，那么就需要 DMA
+
+### 4. AD 数据转换的模式
+
+> 分两个维度：
+>
+> - 单次/连续：转换后是否自动转换
+> - 扫描/非扫描：是否支持多通道
+>
+> 上面四个选两个组合起来，一共四种模式，别 $C_4^2$ 哈，是 $C^1_2 \times C^1_2$
+
+## 3.8 DMA
+

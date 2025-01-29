@@ -301,6 +301,54 @@ void Client::open_chat_box() {
 
 <br>
 
+### 1.8 Time 时间库（C）
+
+---
+
+#### 1. 实现程序记时
+
+> `CLOCKS_PER_SEC` 转换 time 类型的数据为对应的秒数
+
+```c
+#include<stdio.h>
+#include<time.h>
+
+int main()
+{
+    clock_t start_t,finish_t;
+    double total_t = 0;
+    int i = 0;
+    start_t = clock();
+    for(;i<100000;++i)
+    {
+        //do someting;
+    }
+    finish_t = clock();
+    total_t = (double)(finish_t - start_t) / CLOCKS_PER_SEC;//将时间转换为秒
+
+    printf("CPU 占用的总时间：%f\n", total_t);
+    return 0;
+}
+```
+
+#### 2. 常用的函数和对应的逻辑关系
+
+- 常用的函数
+
+| **函数**                                                     | **作用**                               |
+| :----------------------------------------------------------- | -------------------------------------- |
+| time_t time(time_t*);                                        | 获取系统时钟                           |
+| struct tm* gmtime(const time_t*);                            | 秒计数器转换为日期时间（格林尼治时间） |
+| struct tm* localtime(const time_t*);                         | 秒计数器转换为日期时间（当地时间）     |
+| time_t mktime(struct tm*);                                   | 日期时间转换为秒计数器（当地时间）     |
+| char* ctime(const time_t*);                                  | 秒计数器转换为字符串（默认格式）       |
+| char* asctime(const struct tm*);                             | 日期时间转换为字符串（默认格式）       |
+| size_t strftime(char*, size_t, const char*, const struct tm*); | 日期时间转换为字符串（自定义格式）     |
+
+- 数据类型转换的关系
+
+![image-20250120165039147](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250120165039147.png)
+
 ## 2. 类
 
 ----
@@ -1497,7 +1545,7 @@ add_executable(Client
 | `CMAKE_CURRENT_SOURCE_DIR` | 当前 CMakeLists.txt 所在目录的绝对路径          |
 | `CMAKE_CURRENT_BINARY_DIR` | 当前目录的构建目录的绝对路径                    |
 
-### 7. 第三方库的 'head-only'
+### 7. 第三方库的 `head-only`
 
 > 你会发现你用 `vcpkg` 拿到的第三方库会有 `head-only 后缀` 和 `无后缀` 两个版本
 >

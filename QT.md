@@ -48,7 +48,21 @@ calculator::calculator(QWidget *parent) :
 }
 ```
 
+### 1.3  如何给窗口添加 ICON 
 
+> 文件统一存放到我们的 `.qrc` 文件中，然后可以使用代码挂载 ICON，或者说使用 UI 文件
+
+- 代码：有些类型可能找不到，就用这个命令
+
+```cpp
+QIcon icon;
+icon.addFile(QString::fromUtf8(":/img/chat_ico.ico"), QSize(), QIcon::Mode::Normal, QIcon::State::Off);
+loginDialog->setWindowIcon(icon);
+```
+
+- UI 文件
+
+![image-20250106121347269](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250106121347269.png)
 
 ## 2. 信号和槽
 
@@ -304,8 +318,6 @@ else {
     auto path = QFileDialog::getOpenFileName(this, "打开图片", imagePath,
         tr("Images(*.png *.jpg *.bmp *jpeg)"));	// 注意看 tr 里面的内容是 Images 哈
 ```
-
-
 
 ### 6.3 读取文件的内容
 
@@ -636,6 +648,66 @@ settings.setValue("age", 30);
 
 
 
+## 15.  `Combox`
+
+---
+
+### 1. 一个 `ComBox` 的内容指定另一个可用于与否的联动
+
+> 如下效果
+
+![image-20250106144957019](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250106144957019.png)
+
+```cpp
+// 一开始我们都控制住
+if (ui->recvModeCBox->currentIndex() == 0) {
+    ui->recvModeEncode->setEnabled(false);
+} else if (ui->recvModeCBox->currentIndex() == 1) {
+    ui->recvModeEncode->setEnabled(true);
+}
+
+if (ui->sendModeCBox->currentIndex() == 0) {
+    ui->sendModeEncode->setEnabled(false);
+} else if (ui->sendModeCBox->currentIndex() == 1) {
+    ui->sendModeEncode->setEnabled(true);
+}
+
+// 我们使用这个来解放控制权
+// slot 函数处理和上面是一样的
+connect(ui->recvModeCBox, &QComboBox::currentIndexChanged, this, &SerialHelper::slot_hex_tex_mode_modified);
+connect(ui->sendModeCBox, &QComboBox::currentIndexChanged, this, &SerialHelper::slot_hex_tex_mode_modified);
+```
+
+## 16. `Qss` 美化
+
+> 配置 qss，qss 文件书写规则和 css 差不多
+
+```cpp
+#include <QApplication>
+#include <QFile>
+
+int main(int argc, char *argv[]) {
+    QApplication a(argc, argv);
+
+    // Qss 美化
+    QFile qss(":/style/style.qss");
+
+    if (qss.open(QIODevice::ReadOnly)) {
+        qDebug() << "qss Open";
+        QString styple = QLatin1String(qss.readAll());
+        a.setStyleSheet(styple);
+        qss.close();
+    } else {
+        qDebug() << "qss Open Failed";
+    }
+
+    return a.exec();
+}
+
+```
+
+
+
 ## Ex. 环境配置
 
 ---
@@ -643,6 +715,9 @@ settings.setValue("age", 30);
 ### 1. `CMakeLists.txt` 配置
 
 ```cmake
+# dll 所在位置
+set(CMAKE_PREFIX_PATH "D:/App/QT/6.8.1/msvc2022_64")
+
 # 找包
 find_package(Qt6 COMPONENTS
         Core
@@ -740,23 +815,37 @@ add_executable(Client
 
 > `CMake optitions` 里面的内容
 
-```cpp
--DCMAKE_TOOLCHAIN_FILE=D:\vcpkg\scripts\buildsystems\vcpkg.cmake
--DCMAKE_CXX_FLAGS="/utf-8"
+```cmake
+-DCMAKE_TOOLCHAIN_FILE=D:/vcpkg/scripts/buildsystems/vcpkg.cmake
+-DCMAKE_CXX_FLAGS="/utf-8" # 也可以在手动设置 DOM-UTF-8 
 ```
 
 > `QT Creator` 里面的内容
 
 ![image-20241217184501535](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241217184501535.png)
 
-### 5. Qt6 如何导入自己的库
+> 然后接下来，我们就剩下两个步骤了，find_package 和 target_link_lib
+>
+> 但是很多时候都不知道对应的名字叫啥咋办呢
+>
+> 其实我们可以先去 `installed/x64-windows/share/<triple_lib>` 找对应的第三方库
+>
+> 在上述路径中，你会找到 `<triple_lib>Config.cmake` 或类似的文件。打开这个文件，你通常会在文件头部找到 `find_package` 所需的名称
+
+### 5.`Qt6` 如何导入QT的库
 
 > https://blog.csdn.net/m0_61629312/article/details/133445578
 
-```cpp
+```cmake
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Network)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Network)
 
 target_link_libraries(ChatRoom PRIVATE Qt${QT_VERSION_MAJOR}::Network)   
 ```
+
+### 6. 解决 exe 运行出现的窗口问题
+
+​	![image-20250120022524260](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250120022524260.png)
+
+> 对于这个问题，在编译 exe 的时候 加入 Win32 就行
 

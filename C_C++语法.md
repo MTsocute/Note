@@ -162,89 +162,6 @@ const_cast 之后修改值: 20
 通过函数修改 const 参数: 30
 ```
 
-### ==1.4 typdef + c  函数指针==
-
----
-
-> 说实话真的不知道，C 语言也存在函数指针，C ++ 还是太便利了
-
-> 函数指针的声明
-
-```C++
-/*
-	int -> 返回类型
-	func_ptr -> 指针名字
-	(int, int) -> 包含的参数
-*/
-int (*func_ptr)(int, int);
-```
-
-> 基本使用
-
-```c
-int add(int a, int b) { return a + b; }
-
-int main() {
-    // 声明并初始化函数指针
-    int (*func_ptr)(int, int) = add;
-
-    // 使用函数指针调用函数
-    int result = func_ptr(3, 4);
-    printf("Result: %d\n", result);  // 输出：Result: 7
-
-    return 0;
-}
-```
-
-> **使用 typdef 申明某一类函数指针，作为函数的参数使用，实现函数编程**
->
-> `typedef int (*Operation)(int, int);`
->
-> `int(*) (int, int) -> Operation`，如果是 C++ 的话就是：`using Operation = int(*)(int, int);`
-
-```C
-typedef int (*Operation)(int, int);
-
-const int add(int a, int b) { return a + b; }
-
-const int multiply(int a, int b) { return a * b; }
-
-// 使用函数指针类型作为参数
-void operate(int x, int y, Operation op) {
-    printf("Result: %d\n", op(x, y));
-}
-
-int main() {
-    operate(5, 3, add);       // 输出 Result: 8
-    operate(5, 3, multiply);  // 输出 Result: 15
-    return 0;
-}
-```
-
-#### ==2. 让一个函数返回类型为函数指针==
-
-```c
-// 定义一个具体的函数
-int myFunction(int x) { return x * x; }
-
-// 返回值是函数指针的函数
-int (*getFunction(void))(int) {
-    return myFunction; // 返回函数的地址
-}
-
-int main() {
-    // 获取函数指针
-    int (*funcPtr)(int) = getFunction();	// 函数返回是一个函数指针
-
-    // 调用通过函数指针返回的函数
-    printf("Result: %d\n", funcPtr(5)); 	// 输出 25
-
-    return 0;
-}
-```
-
-
-
 ### 1.5  位运算
 
 | 运算符 | 中文名称 | 英文名称  | 作用                                                         |
@@ -1150,6 +1067,17 @@ _instance = std::make_shared<T>(new T);
 
 > `new T` 的时候 T 是 httpManger，会使用子类的构造函数，但是子类的构造函数是存储在 private 下面的，所以需要使用 friend 让父类可以访问到构造函数
 
+```cpp
+// 这里的 singleton 
+class HttpManger : public QObject, public singleton<HttpManger> {
+public:
+    ~HttpManger();	// 要注意这里的析构必须是公有的，因为父类的析构在 private 下
+private:
+    friend class Singleton<HttpManger>;     // base class as friend to access child's construct function
+    HttpManger();	// 父类的构造在 protect 可以访问到
+};
+```
+
 
 
 ## 4. 文件操作
@@ -1267,6 +1195,214 @@ int main() {
 
 
 <br>
+
+## 5. 函数式编程
+
+---
+
+### ==1. 函数指针==
+
+> 函数指针的声明
+
+```C++
+/*
+	int -> 返回类型
+	func_ptr -> 指针名字
+	(int, int) -> 包含的参数
+*/
+int (*func_ptr)(int, int);
+```
+
+> 基本使用
+
+```c
+int add(int a, int b) { return a + b; }
+
+int main() {
+    // 声明并初始化函数指针
+    int (*func_ptr)(int, int) = add;
+
+    // 使用函数指针调用函数
+    int result = func_ptr(3, 4);
+    printf("Result: %d\n", result);  // 输出：Result: 7
+
+    return 0;
+}
+```
+
+#### 1. 函数指针传参
+
+> `typedef int (*Operation)(int, int);`
+>
+> `int(*) (int, int) -> Operation`，**如果是 C++ 的话就是**：`using Operation = int(*)(int, int);`
+
+```C
+typedef int (*Operation)(int, int);
+
+const int add(int a, int b) { return a + b; }
+
+const int multiply(int a, int b) { return a * b; }
+
+// 使用函数指针类型作为参数
+void operate(int x, int y, Operation op) {
+    printf("Result: %d\n", op(x, y));
+}
+
+int main() {
+    operate(5, 3, add);       // 输出 Result: 8
+    operate(5, 3, multiply);  // 输出 Result: 15
+    return 0;
+}
+```
+
+#### 2. 函数返回类型为函数指针
+
+> 不声明的写法有点糟糕, 但是还是要认识一下
+
+```cpp
+// 定义一个具体的函数
+int myFunction(int x) { return x * x; }
+
+// 返回值是函数指针的函数
+int (*getFunction())(int) {
+	return myFunction;
+}
+```
+
+> 推荐下麦呢的做法
+
+```c
+typedef int(*my_func)(int);		// 把一个函数指针作为一个类型用, 不然容易看不懂
+
+// 返回值是函数指针的函数
+my_func getFunction() {
+    return myFunction;
+}
+
+int main() {
+    // 获取函数指针
+    int (*funcPtr)(int) = getFunction();	// 函数返回是一个函数指针
+
+    // 调用通过函数指针返回的函数
+    printf("Result: %d\n", funcPtr(5)); 	// 输出 25
+
+    return 0;
+}
+```
+
+### 2. `std::fucntion< T(arg ...) >`
+
+> 这个就是 CPP 版本的函数指针
+
+```cpp
+int add(const int a, const int b) { return a + b; }
+
+
+int main() {
+    // 大多数外部的这个 function<> 没有存在感, 因为可以 auto
+    function<int(int, int)> add_func_P = add;
+    std::cout << std::format("Ans = {}\n", add_func_P(20, 440));
+}
+```
+
+
+
+#### 1. 声明一个函数指针类型
+
+```cpp
+int add(const int a, const int b) { return a + b; }
+
+// 这里声明了一个函数指针类型
+using my_int_func = function<int(int, int)>;
+
+int main() {
+    // 使用类型声明
+    my_int_func add_func_P = add;
+    std::cout << std::format("Ans = {}\n", add_func_P(220 440));
+}
+```
+
+<br>
+
+#### 2. 函数指针作为参数传递
+
+```cpp
+int add(const int a, const int b) { return a + b; }
+
+using my_int_func = function<int(int, int)>;
+
+// 函数指针作为参数传递
+int demo1(const my_int_func &op, int a, int b) {
+    return op(a, b);
+}
+
+int main() {
+    std::cout << std::format("Ans = {}\n", op(add, 202, 440));
+}
+```
+
+#### 3. 函数返回类型为函数指针
+
+```cpp
+using my_int_func = function<int(int, int)>;
+int add(const int a, const int b) { return a + b; }
+
+// 函数指针类型作为函数类型
+my_int_func getFunction() { return add; }
+
+int main() {
+    function<int(int, int)> op = getFunction();
+    std::cout << std::format("Ans = {}", op(10, 20)) << std::endl;
+    return 0;
+}
+```
+
+### 3. `bind()`
+
+> 它的作用是将一个可调用对象（比如函数、成员函数或 Lambda）和其参数绑定在一起，生成一个新的可调用对象。这个新的可调用对象可以在之后的某个时刻被调用，**而且它的参数可以部分预先绑定**。
+>
+> - 固定某些参数的值
+> - 重新排列参数顺序
+> - 将成员函数绑定到特定的对象上
+
+- 普通函数的绑定
+
+> 要注意, 这里这个占位符 不是说 10 占据了 1 这个位置, 而是 _1 占据了 b 的位置, 这个 b 等会别人传进来
+
+```cpp
+// 使用 std::bind 绑定 add 函数，将第一个参数绑定为 10
+constexpr int add(const int a, const int b) { return a + b; }
+auto bound_add = std::bind(add, 10, std::placeholders::_1);
+	
+// 调用时只需要提供第二个参数
+std::cout << bound_add(20) << std::endl;  // 输出 30
+```
+
+- 类对象成员函数的绑定
+
+```cpp
+class MyClass {
+public:
+    int multiply(int a, int b) { return a * b; }
+};
+
+int main() {
+    MyClass obj;
+
+    // 将成员函数 multiply 绑定到对象 obj 上，固定 a 为 5
+    auto bound_multiply = std::bind(&MyClass::multiply, &obj, 5, std::placeholders::_1);
+
+    std::cout << bound_multiply(4) << std::endl;  // 输出 20
+
+    return 0;
+}
+```
+
+
+
+<br>
+
+
 
 ## Ex. CMakeLists 编写
 

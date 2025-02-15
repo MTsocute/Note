@@ -26,6 +26,8 @@
 > ```
 >
 > 因为中途做改变会非常困难而且容易出错，所以你在项目初期（最好是一开始）就得决定用同步还是异步的方式实现网络通信。不仅API有极大的不同，你程序的语意也会完全改变（异步网络通信通常比同步网络通信更加难以测试和调试）。你需要考虑是采用阻塞调用和多线程的方式（同步，通常比较简单），或者是更少的线程和事件驱动（异步，通常更复杂）
+>
+> 注：如果后面代码中的 `Boost API` 看不懂的话也可以先问问 GPT，我们后面会具体说一些 API 的，主要是理解在干什么，API 就是满足这个功能的具体方法而已
 
 <br>
 
@@ -39,7 +41,7 @@
 
 ```cpp
 using boost::asio;
-io_service service;	// Boost.Asio 的核心类，用于管理所有异步 I/O 操作
+io_service service;	// Boost.Asio 的核心类，用于管理所有 I/O 操作
 ip::tcp::endpoint ep(ip::address::from_string("Server_IP"), 2001);	// 表示一个网络连接的终点，包括 IP 地址和端口号
 ip::tcp::socket sock(service);	// 创建一个套接字并绑定到前面的 io_service，以便通过它进行网络通信
 sock.connect(ep);	// 连接到指定的服务器
@@ -52,6 +54,10 @@ sock.connect(ep);	// 连接到指定的服务器
 > 所以你修改 IP 地址，也是可以连接到别的服务器的
 
 ### 2 `Asio` 同步客户端 -- 域名
+
+> 对解析完毕的 resolver 解引用的话，返回的结果就是一个 `endpoint`
+>
+> 使用迭代器的原因是域名可以是多个地址的(端点), 所以我们可能要访问很多个端点,这个 `connet` 帮我们处理好的迭代的工作了
 
 ```cpp
 using boost::asio;
@@ -287,3 +293,278 @@ void run_service(int idx) {
 }
 ```
 
+## 6. socket 类
+
+---
+
+> 不是所有的方法都可以在各个类型的套接字里使用, 如果一个成员函数没有出现在这，说明它在所有的套接字类都是可用的
+>
+> 注意：所有的异步方法都立刻返回，而它们相对的**同步**实现需要操作完成之后才能返回
+
+| 名字               | TCP  | UDP  | ICMP |
+| ------------------ | ---- | ---- | ---- |
+| async_read_some    | 是   | -    | -    |
+| async_receive_from | -    | 是   | 是   |
+| async_write_some   | 是   | -    | -    |
+| async_send_to      | -    | 是   | 是   |
+| read_some          | 是   | -    | -    |
+| receive_from       | -    | 是   | 是   |
+| write_some         | 是   | -    | -    |
+| send_to            | -    | 是   | 是   |
+
+<br>
+
+### 1. socket  的连接处理函数
+
+| 函数                         | 描述                                                         |
+| :--------------------------- | ------------------------------------------------------------ |
+| `assign(protocol, socket)`   | 分配一个原生的 socket 给该 socket 实例，常用于处理已建立原生 socket 的旧程序。 |
+| `open(protocol)`             | 使用给定的 IP 协议（IPv4 或 IPv6）打开一个 socket，主要用于 UDP/ICMP socket 或服务端 socket。 |
+| `bind(endpoint)`             | 绑定 socket 到一个指定的地址。                               |
+| `connect(endpoint)`          | 以**同步方式**连接到指定地址。                               |
+| `async_connect(endpoint)`    | 以**异步方式**连接到指定地址。                               |
+| `is_open()`                  | 判断套接字是否已打开，已打开返回 `true`。                    |
+| `close()`                    | 关闭套接字，任何未完成的异步操作会被立即终止，并返回 `error::operation_aborted` 错误码。 |
+| `shutdown(type_of_shutdown)` | 立即禁用 `send` 或 `receive` 操作，或两者同时禁用。          |
+| `cancel()`                   | 取消套接字上所有异步操作，所有异步操作会立即结束，并返回 `error::operation_aborted` 错误码。 |
+
+> 这里补充说明一下这个 `open` 方法
+
+```cpp
+ip::udp::endpoint ep(ip::address::from_string("127.0.0.1"), 8001);
+sock.open(ep.protocol());		// 这个端点创建的时候会隐式创建 IPv4 协议, 所以使用的时候也是
+```
+
+<br>
+
+### 2.  socket 的 IO 处理函数
+
+| 函数类型             | 函数名称             | 参数                                 | 功能描述                     | 异步/同步 | 备注                           |
+| -------------------- | -------------------- | ------------------------------------ | ---------------------------- | --------- | ------------------------------ |
+| **异步接收**         | `async_receive`      | `buffer, [flags,] handler`           | 启动从套接字异步接收数据     | 异步      | 与 `async_read_some` 功能一致  |
+|                      | `async_read_some`    | `buffer, handler`                    | 同上                         | 异步      | 别名函数                       |
+| **异步接收（端点）** | `async_receive_from` | `buffer, endpoint[, flags], handler` | 从指定端点异步接收数据       | 异步      | 适用于 UDP/无连接协议          |
+| **异步发送**         | `async_send`         | `buffer [, flags], handler`          | 启动异步发送缓冲区数据       | 异步      | 与 `async_write_some` 功能一致 |
+|                      | `async_write_some`   | `buffer, handler`                    | 同上                         | 异步      | 别名函数                       |
+| **异步发送（端点）** | `async_send_to`      | `buffer, endpoint, handler`          | 异步发送数据到指定端点       | 异步      | 适用于 UDP/无连接协议          |
+| **同步接收**         | `receive`            | `buffer [, flags]`                   | 阻塞接收数据，直到完成或出错 | 同步      | 与 `read_some` 功能一致        |
+|                      | `read_some`          | `buffer`                             | 同上                         | 同步      | 别名函数                       |
+| **同步接收（端点）** | `receive_from`       | `buffer, endpoint [, flags]`         | 从指定端点阻塞接收数据       | 同步      | 适用于 UDP/无连接协议          |
+| **同步发送**         | `send`               | `buffer [, flags]`                   | 阻塞发送数据，直到完成或出错 | 同步      | 与 `write_some` 功能一致       |
+|                      | `write_some`         | `buffer`                             | 同上                         | 同步      | 别名函数                       |
+| **同步发送（端点）** | `send_to`            | `buffer, endpoint [, flags]`         | 阻塞发送数据到指定端点       | 同步      | 适用于 UDP/无连接协议          |
+| **状态查询**         | `available`          | 无                                   | 返回可无阻塞同步读取的字节数 | 同步      | 用于检查数据是否就绪           |
+
+<br>
+
+### ==3 . 缓冲区==
+
+> `ip::socket_type::socket::message_peek`：这个标记只监测并返回某个消息，但是下一次读消息的调用会重新读取这个消息
+>
+> 你最常用的可能是 *message_peek* ，使用方法请参照下面的代码片段：
+
+```cpp
+char buff[1024];
+sock.receive(buffer(buff), ip::tcp::socket::message_peek );
+memset(buff,1024, 0);
+// 重新读取之前已经读取过的内容
+sock.receive(buffer(buff));
+```
+
+> 当从一个套接字读写内容时，你需要一个缓冲区，用来保存读取和写入的数据。
+>
+> 缓冲区内存的有效时间必须比`I/O`操作的时间要长；你需要**保证它们在I/O操作结束之前不被释放**。 对于同步操作来说，这很容易；当然，这个缓冲区在`receive`和`send`时都存在。
+
+<br>
+
+> 当需要对一个buffer进行读写操作时，代码会把实际的缓冲区对象封装在一个buffer()方法中，然后再把它传递给方法调用：
+
+```cpp
+char buff[512];
+sock.async_receive(buffer(buff), on_read);
+```
+
+
+
+#### 1. 异步套接字缓冲区的问题
+
+> 但是在异步操作时就没这么简单了，看下面的代码片段：
+
+```cpp
+// 非常差劲的代码 ...
+void on_read(const boost::system::error_code & err, std::size_t read_bytes)
+{ ... }
+
+void func() {
+    char buff[512];
+    sock.async_receive(buffer(buff), on_read);	// 进入异步函数之后, 我们的 buff 是释放了还是没有呢?
+}
+```
+
+> 我们进入异步的 on_read 函数回调的时候, 这个buff 是释放还是没有被释放的状态呢?
+>
+> 在我们调用 *async_receive()* 之后，buff 就已经超出有效范围，它的内存当然会被释放。当我们开始从套接字接收一些数据时，我们会把它们拷贝到一片已经不属于 buff 的内存中；不属于 buff 的内存可能会被释放，或者被其他代码重新开辟来存入其他的数据，结果就是：内存冲突。
+
+#### 2. 缓冲区问题解决方案
+
+##### 1.使用全局缓冲区
+
+>  第一个方法显然不是很好，因为我们都知道全局变量非常不好。此外，如果两个实例使用同一个缓冲区怎么办？
+
+##### 2.创建一个缓冲区，然后在操作结束时释放它
+
+> 下面是**第二种方式的实现**：
+
+```cpp
+void on_read(char * ptr, const boost::system::error_code & err, std::size_t read_bytes) {
+    // 读取操作完成之后 ...
+    delete[] ptr;		// 手动释放空间
+}
+
+char * buff = new char[512];	// 动态的空间,异步结束后之后处理
+
+// _1 和 _2 分别占位 error_code 和 read_bytes，这两个参数会在异步操作完成时由 async_receive 传入。
+sock.async_receive(buffer(buff, 512), boost::bind(on_read, buff, _1, _2));
+```
+
+> **第二种方式**的另一种实现:
+
+```cpp
+struct shared_buffer {
+    // 构造函数：分配指定大小的缓冲区并初始化
+    shared_buffer(size_t size) : buff(new char[size]), size(size) {}
+    
+    // 返回 asio 的 标准 buffer
+    mutable_buffers_1 asio_buff() const { return buffer(buff.get(), size); }
+    
+    boost::shared_array<char> buff;	// 这个是核心, 因为它会随着作用域的析构而析构
+    int size;
+};
+
+// 当on_read超出范围时, boost::bind对象被释放了,同时也会释放 buff
+void on_read(shared_buffer, const boost::system::error_code & err, std::size_t read_bytes) {}
+
+struct shared_buffer buff(512);
+sock.async_receive(buff.asio_buff(), boost::bind(on_read,buff,_1,_2));
+```
+
+##### 3.使用一个集合对象管理这些套接字和其他的数据，比如缓冲区数组
+
+> 第三个选择是使用一个连接对象来管理套接字和其他数据，比如缓冲区，通常来说这是正确的解决方案但是非常复杂。
+
+
+
+### 4.套接字控制
+
+> 这些函数用来处理**套接字**的高级选项：
+>
+> - `get_io_service()`：这个函数返回构造函数中传入的io_service实例
+> - `get_option(option)`：这个函数返回一个套接字的属性
+> - `set_option(option)`：这个函数设置一个套接字的属性
+> - `io_control(cmd)`：这个函数在套接字上执行一个I/O指令
+
+这些是你可以获取/设置的套接字选项：
+
+| 名字                        | 描述                                                  | 类型 |
+| --------------------------- | ----------------------------------------------------- | ---- |
+| `broadcast`                 | 如果为true，允许广播消息                              | bool |
+| `debug`                     | 如果为true，启用套接字级别的调试                      | bool |
+| `do_not_route`              | 如果为true，则阻止路由选择只使用本地接口              | bool |
+| `enable_connection_aborted` | 如果为true，记录在accept()时中断的连接                | bool |
+| `keep_alive`                | 如果为true，会发送心跳                                | bool |
+| `linger`                    | 如果为true，套接字会在有未发送数据的情况下挂起close() | bool |
+| `receive_buffer_size`       | 套接字接收缓冲区大小                                  | int  |
+| `receive_low_watemark`      | 规定套接字输入处理的最小字节数                        | int  |
+| `reuse_address`             | 如果为true，套接字能绑定到一个已用的地址              | bool |
+| `send_buffer_size`          | 套接字发送缓冲区大小                                  | int  |
+| `send_low_watermark`        | 规定套接字数据发送的最小字节数                        | int  |
+| `ip::v6_only`               | 如果为true，则只允许IPv6的连接                        | bool |
+
+```cpp
+ip::tcp::endpoint ep( ip::address::from_string("127.0.0.1"), 80);
+ip::tcp::socket sock(service);
+sock.connect(ep);
+// TCP套接字可以重用地址
+ip::tcp::socket::reuse_address ra(true);
+sock.set_option(ra);
+// 获取套接字读取的数据
+ip::tcp::socket::receive_buffer_size rbs;
+sock.get_option(rbs);
+std::cout << rbs.value() << std::endl;
+// 把套接字的缓冲区大小设置为8192
+ip::tcp::socket::send_buffer_size sbs(8192);
+sock.set_option(sbs);
+```
+
+> **在上述特性工作之前，套接字要被打开**。否则，会抛出异常
+
+### 5. 套接字读取数据
+
+> 之前的 demo 里面都是大致的如何连接, 同步和异步的区别, 但是 IO 部分一直都没有处理, 毕竟没涉及到缓存, 所以知道了缓存之后, 我们再来看看如何实现**同步或异步地从不同类型的套接字上读取数据**
+
+- 例1: 是在一个 **TCP套接字** 上进行同步读写：
+
+  ```cpp
+  ip::tcp::endpoint ep(ip::address::from_string("87.248.112.181"), 80);
+  ip::tcp::socket sock(service);
+  sock.connect(ep);
+  
+  sock.write_some(buffer("GET /index.html\r\n"));
+  std::cout << "bytes available " << sock.available() << std::endl;
+  char buff[512];
+  size_t read = sock.read_some(buffer(buff));
+  ```
+
+- 例2: 是在一个 **UDP套接字** 上进行同步读写：
+
+  ```cpp
+  ip::udp::socket sock(service);
+  sock.open(ip::udp::v4());
+  ip::udp::endpoint receiver_ep("87.248.112.181", 80);		// target
+  
+  sock.send_to(buffer("testing\n"), receiver_ep);
+  char buff[512];
+  ip::udp::endpoint sender_ep;
+  sock.receive_from(buffer(buff), sender_ep);
+  ```
+
+- 例3: 是从一个 **UDP服务端** 套接字中 **异步** 读取数据：
+
+```cpp
+using namespace boost::asio;
+io_service service;
+ip::udp::socket sock(service);
+ip::udp::endpoint sender_ep;		// 用于记录发送端
+
+char buff[512];
+
+void on_read(const boost::system::error_code & err, std::size_t read_bytes) {
+    std::cout << "read " << read_bytes << std::endl;
+    sock.async_receive_from(buffer(buff), sender_ep, on_read);
+}
+
+int main(int argc, char* argv[]) {
+    ip::udp::endpoint ep(ip::address::from_string("127.0.0.1"), 8001);    // 服务端自己的端点
+    sock.open(ep.protocol());		// 
+    sock.set_option(ip::udp::socket::reuse_address(true));	//
+    sock.bind(ep);
+    // region 核心部分
+    sock.async_receive_from(buffer(buff,512), sender_ep, on_read);
+    // endregion
+    service.run();
+}
+```
+
+### 6. 套接字实例不能被拷贝
+
+> 最后要注意的一点，套接字实例不能被拷贝，因为拷贝构造方法和＝操作符是不可访问的。
+
+```cpp
+ip::tcp::socket s1(service), s2(service);
+s1 = s2; // 编译时报错
+ip::tcp::socket s3(s1); // 编译时报错
+```
+
+> 因为每一个实例都拥有并管理着一个资源（原生套接字本身）
+>
+> 如果我们允许拷贝构造，结果是我们会有两个实例拥有同样的原生套接字；`Boost.Asio` 选择不允许拷贝（如果你想要创建一个备份，请使用共享指针）

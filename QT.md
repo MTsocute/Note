@@ -51,6 +51,8 @@ calculator::calculator(QWidget *parent) :
 ### 1.3  如何给窗口添加 ICON 
 
 > 文件统一存放到我们的 `.qrc` 文件中，然后可以使用代码挂载 ICON，或者说使用 UI 文件
+>
+> 关于什么是 qrc 文件，和如何配置，请具体看我们的 17
 
 - 代码：有些类型可能找不到，就用这个命令
 
@@ -708,6 +710,35 @@ int main(int argc, char *argv[]) {
 
 
 
+## 17. qrc 资源文件
+
+---
+
+> qrc 就是 QT 中管理资源路径的文件，有这个确定过文件路径之后，我们大部分图片等资源，就可以使用这个一同管理
+>
+> 先看下我们的文件结构构成
+>
+> - prefix就是前缀的虚拟文件夹名，在代码中引用规则为:虚拟文件夹名/文件路径
+> - file 就是这个虚拟文件夹下的文件，所以要对应实际的路径
+
+```html
+<RCC>
+    <qresource prefix="/image">
+        <file>resources/qss/flatgray/1.png</file>
+        <file>resources/qss/flatgray/2.png</file>
+        <file>resources/qss/flatgray/3.png</file>
+
+    </qresource>
+    
+    <qresource prefix="/qss">
+        <file>resources/qss/flatgray.qss</file>
+    </qresource>
+
+</RCC>
+```
+
+
+
 ## Ex. 环境配置
 
 ---
@@ -716,7 +747,7 @@ int main(int argc, char *argv[]) {
 
 ```cmake
 # dll 所在位置
-set(CMAKE_PREFIX_PATH "D:/App/QT/6.8.1/msvc2022_64")
+set(CMAKE_PREFIX_PATH "path/to/msvc2022_64")
 
 # 找包
 find_package(Qt6 COMPONENTS
@@ -817,7 +848,6 @@ add_executable(Client
 
 ```cmake
 -DCMAKE_TOOLCHAIN_FILE=D:/vcpkg/scripts/buildsystems/vcpkg.cmake
--DCMAKE_CXX_FLAGS="/utf-8" # 也可以在手动设置 DOM-UTF-8 
 ```
 
 > `QT Creator` 里面的内容

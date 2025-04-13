@@ -61,7 +61,7 @@ def get_id():
 ```py
 import re
 
-url = "https://music.163.com/#/song?id=29771146"
+url = "https://music.163.com/#/song?id=29771146"		# 这些规则可以交给 AI 没必要自己写
 pattern = r'id=(\d+)'
 
 match = re.search(pattern, url)
@@ -89,7 +89,7 @@ Span: (30, 38)
 
 ---
 
-### 3.1 requests.get()
+### 3.1 `requests.get()`
 
 > 参数介绍
 
@@ -111,7 +111,7 @@ Span: (30, 38)
 - `response.json()`: 返回 JSON 格式的数据（如果服务器返回的内容是 JSON），否则会抛出错误。
 - `response.headers`: 返回服务器的响应头信息（字典形式）。
 
-### 3.1.1 带请求头的请求
+#### 3.1.1 带请求头的请求
 
 ```py
 def get_lyrics(id):
@@ -138,7 +138,7 @@ def get_lyrics(id):
         return None
 ```
 
-### 3.1.2 处理超时
+#### 3.1.2 处理超时
 
 ```python
 try:
@@ -147,3 +147,12 @@ except requests.Timeout:
     print("请求超时")
 ```
 
+<br>
+
+## Ex. 其他配置
+
+---
+
+### 1. 统一的管理方法
+
+> [解决 Python 烦人的环境管理分裂问题](https://www.youtube.com/watch?v=aVXs8lb7i9U)

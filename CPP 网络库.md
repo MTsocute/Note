@@ -1,4 +1,4 @@
-# `Boost::Asio`
+# $Boost::Asio$
 
 ---
 
@@ -28,6 +28,144 @@
 > 因为中途做改变会非常困难而且容易出错，所以你在项目初期（最好是一开始）就得决定用同步还是异步的方式实现网络通信。不仅API有极大的不同，你程序的语意也会完全改变（异步网络通信通常比同步网络通信更加难以测试和调试）。你需要考虑是采用阻塞调用和多线程的方式（同步，通常比较简单），或者是更少的线程和事件驱动（异步，通常更复杂）
 >
 > 注：如果后面代码中的 `Boost API` 看不懂的话也可以先问问 GPT，我们后面会具体说一些 API 的，主要是理解在干什么，API 就是满足这个功能的具体方法而已
+
+### 1. 异步工作
+
+> 默认情况下，**你是不知道每个异步`handler`的调用顺序的**
+>
+> 除了通常的异步调用（来自异步socket的读取/写入/接收）你可以使用`service.post()`来使你的**自定义方法被异步地调用**
+
+```cpp
+using namespace boost::asio;
+io_service service;
+
+void func(int i) { std::cout << "func called, i= " << i << std::endl; }
+
+void worker_thread() { service.run(); }
+
+int main(int argc, char* argv[]) {
+    // 将任务提交给 io_service, 注意这里的 .post() 
+    for ( int i = 0; i < 10; ++i) { service.post(boost::bind(func, i)); }
+    boost::thread_group threads;		// 简单线程池
+    // 三个线程
+    for ( int i = 0; i < 3; ++i) threads.create_thread(worker_thread);
+    // 等待所有线程被创建完
+    boost::this_thread::sleep( boost::posix_time::millisec(500));
+    threads.join_all();
+}
+```
+
+> 你不能确定异步方法调用的顺序。它们不会以我们调用*post()*方法的顺序来调用。下面是运行之前代码可能得到的结果：
+
+```sh
+func called, i= 0
+func called, i= 2
+func called, i= 1
+func called, i= 4
+func called, i= 3
+func called, i= 6
+func called, i= 7
+func called, i= 8
+func called, i= 5
+func called, i= 9
+```
+
+### 2. 异步工作的顺序执行
+
+> 有时候你会想让一些**异步处理方法顺序执行**。比如，你去一个餐馆，下单，然后吃。你需要先去餐馆，然后下单，最后吃。这样的话，**你需要用到 `io_service::strand`，这个方法会让你的异步方法被顺序调用**
+
+```cpp
+using namespace boost::asio;
+io_service service;
+
+void func(const int i) { std::cout << "func called, i= " << i << std::endl; }
+
+void worker_thread() { service.run(); }
+
+int main() {
+    io_service::strand strand_one(service), strand_two(service);
+    // 前五个
+    for (int i = 0; i < 5; ++i)
+        service.post(strand_one.wrap([i] { func(i); }));
+
+    // 后五个
+    for (int i = 5; i < 10; ++i)
+        service.post(strand_two.wrap([i] { func(i); }));
+
+    boost::thread_group threads;
+
+    for (int i = 0; i < 3; ++i)
+        threads.create_thread(worker_thread);
+
+    // 等待所有线程被创建完
+    boost::this_thread::sleep(boost::posix_time::millisec(1000));
+    threads.join_all();
+}
+```
+
+> 在上述代码中，我们保证前面的 5个 线程和后面的 5个 线程是顺序执行的, 不是你预期的 0~9
+>
+> 但是前五个线程一定是先于后五个执行的, **所以无论你如何运行一定会有 0 运行在 5 之前的** (如果你缩短那个 sleep 时间的话, 其实还是会出现后面执行更快的现象)
+
+### 3. 异步调用处理方法
+
+> `post() VS dispatch() VS wrap()`
+>
+> - `service.post(handler)`：这个方法能确保其在请求`io_service`实例，然后调用指定的处理方法之后立即返回。`handler`稍后会在某个调用了`service.run()` 的线程中被调用。
+> - `service.dispatch(handler)`：这个方法请求`io_service`实例去调用给定的处理方法，但是另外一点，如果当前的线程调用了`service.run()`，它可以在方法中直接调用handler。
+> - `service.wrap(handler)`：这个方法创建了一个封装方法，当被调用时它会调用`service.dispatch(handler)`
+
+```cpp
+using namespace boost::asio;
+io_service service;
+void func(int i) { std::cout << "func called, i= " << i << std::endl; }
+
+void run_dispatch_and_post() {
+    for ( int i = 0; i < 10; i += 2) {
+        service.dispatch(boost::bind(func, i));	// server.run() 处理这个函数的时候, 上交一个任务处理一个
+        service.post(boost::bind(func, i + 1));	// server.run() 处理结束之后, 才依次执行任务
+    }
+}
+int main(int argc, char* argv[]) {
+    // 注意这里提交的任务是: run_dispatch_and_post
+    service.post(run_dispatch_and_post);
+    service.run();
+}
+```
+
+> - **`dispatch`立即执行**：因为此时`service.run()`正在运行（处理`run_dispatch_and_post`任务），`dispatch`绑定的`func(i)`会立即执行，输出偶数（0, 2, 4, 6, 8）。
+> - **`post`延迟执行**：将`func(i+1)`加入队列，但当前任务（`run_dispatch_and_post`）未完成，这些`handler`会在循环结束后执行，输出奇数（1, 3, 5, 7, 9）。
+
+`wrap()` 返回了一个仿函数，它可以用来做另外一个方法的参数：
+
+```cpp
+using namespace boost::asio;
+io_service service;
+void dispatched_func_1() { std::cout << "dispatched 1" << std::endl; }
+void dispatched_func_2() { std::cout << "dispatched 2" << std::endl; }
+
+void test(std::function<void()> func) {
+    std::cout << "test" << std::endl;
+    service.dispatch(dispatched_func_1);	// 提交给 io_server 的任务 1, 并立即执行
+    func();	// 提交给 io_server 的任务 2, 在当前函数执行之后, 再执行
+}
+void service_run() { service.run(); }
+
+int main(int argc, char* argv[]) {
+    test( service.wrap(dispatched_func_2) );	// 包装了 io_server 的任务 2
+    boost::thread th(service_run);		// 主线程执行 test(), 创建的线程执行异步回调函数
+    boost::this_thread::sleep( boost::posix_time::millisec(500));
+    th.join();
+}
+```
+
+> 结果
+
+```sh
+test
+dispatched 1
+dispatched 2
+```
 
 <br>
 
@@ -102,6 +240,20 @@ void client_session(socket_ptr sock) {
     }
 }
 ```
+
+### 4. echo 服务器
+
+```cpp
+```
+
+
+
+### 5. echo 客户端
+
+```cpp
+```
+
+
 
 <br>
 
@@ -240,11 +392,11 @@ t.async_wait(timeout_handler);
 service.run();
 ```
 
-### 2. 一个 io_service 实例和多个处理线程
+### 2. 一个` io_service` 实例和多个处理线程
 
 > 回顾一下，我们的异步操作相当于申请了事件，我们异步事件的执行是按照顺序的，那么我们分配多个线程干什么呢，线程并不可以帮我们分担异步事件啊
 >
-> 其实线程里面做的事情并不是分担信号，分担槽，就是处理信号发生之后的回调函数（`xxx_handler()`），这避免了单线程模式下因一个耗时的回调阻塞其他操作处理程序的问题
+> **其实线程里面做的事情并不是分担信号而是分担槽**，就是处理信号发生之后的回调函数（`xxx_handler()`），这避免了单线程模式下因一个耗时的回调阻塞其他操作处理程序的问题
 
 ```cpp
 io_service service;
@@ -292,6 +444,37 @@ void run_service(int idx) {
     service[idx].run();
 }
 ```
+
+<br>
+
+### 4. 异步 `run(), runone(), poll(), pollone()`
+
+---
+
+#### 1. 持续运行
+
+> 如果有等待执行的操作，*run()*会一直执行，直到你手动调用*io_service::stop()*。为了保证*io_service*一直执行，通常你添加一个或者多个异步操作，然后在它们被执行时，你继续一直不停地添加异步操作
+
+![image-20250216160231597](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250216160231597.png)
+
+#### 2. 单次执行
+
+> 你可以使用run_once()启动一个异步操作，然后等待它执行完成
+
+```cpp
+io_service service;
+bool write_complete = false;
+void on_write(const boost::system::error_code & err, size_t bytes) { write_complete = true; }
+
+std::string data = "login ok”;
+write_complete = false;
+async_write(sock, buffer(data), on_write);
+
+// 在确保其他异步执行正常的情况下, 直到完成一次 on_write 函数就结束
+do service.run_once() while (!write_complete);
+```
+
+
 
 ## 6. socket 类
 
@@ -568,3 +751,68 @@ ip::tcp::socket s3(s1); // 编译时报错
 > 因为每一个实例都拥有并管理着一个资源（原生套接字本身）
 >
 > 如果我们允许拷贝构造，结果是我们会有两个实例拥有同样的原生套接字；`Boost.Asio` 选择不允许拷贝（如果你想要创建一个备份，请使用共享指针）
+
+# $Ex. 关联拓展$
+
+## 1. SQL
+
+---
+
+### 1. 查
+
+```sql
+# 条件查询
+select * from employee where sex = 1 and username = 'momo';
+
+# 模糊查询
+select * from employee where age like '%3%';
+
+# 分页 [start from <0 as first one>, how many data]
+select * from employee limit 0,2;
+
+# 分组: 统计员工中 ID 是 721 的男性个数是多少
+# having 只可以是 sex 里面有的不可以是别的
+select count(*) from employee e
+where employID = 101
+group by sex
+having sex = 1;
+
+# 关联查询
+select employee.*,
+       department.name as departmentName
+from employee
+         left join department # 这个left 是 department 这个表在相对的左边
+                   on employee.department_id = department.id;
+
+# 关联查询 + 分页
+select employee.*,
+       department.name as departmentName
+from employee
+         left join department # 这个left 是 department 这个表在相对的左边
+                   on employee.department_id = department.id
+limit 0,2;
+```
+
+### 2. 增
+
+```sql
+INSERT INTO ts_demo.department (id, name) 
+VALUES (3, 'purchase_part');
+```
+
+### 3. 改
+
+```sql
+UPDATE ts_demo.department 
+SET name = 'purchase_part' 
+WHERE id = 3;
+```
+
+### 4. 删
+
+```sql
+DELETE  
+FROM ts_demo.department
+WHERE id = 3;
+```
+

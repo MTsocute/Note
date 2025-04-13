@@ -2,11 +2,18 @@
 
 ---
 
-笔记本非常的杂乱，前期是了别翻阅文件拷贝相同代码而用的，所以有点乱，现在主要分成三块
+- 笔记本非常的杂乱，前期是了别翻阅文件拷贝相同代码而用的，所以有点乱，现在主要分成三块
 
 1. 实现某功能如何配置 GPIO 
 2. 实现所需功能使用对应的 HAL 的库
 3. 实现这个功能所需要的基本原理，主要是为了告诉参数是对应什么，不会太深入
+
+- 参考资料
+
+1. [`stm32 + freeRTOS`](https://www.bilibili.com/video/BV1sE411d7x7/?spm_id_from=333.337.search-card.all.click&vd_source=b47817c1aa0db593f452034d53d4273a)
+2. [`stm32 如何使用 C++ 开发`](https://www.bilibili.com/video/BV1KZ4y1B7DH/?spm_id_from=333.1387.favlist.content.click)
+3. [`smt32 openOCD 开发环境`](https://blog.csdn.net/qq_46226142/article/details/142715291?spm=1001.2014.3001.5501)
+4. [高版本的 `arm-none-gcc` 编译器](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads)
 
 # 1. 基础配置
 
@@ -16,10 +23,10 @@
 
 > 烧录文件配置：`stlink.cfg`
 
-```cfg
+```ruby
 # choose st-link/j-link/dap-link etc.
-#adapter driver cmsis-dap
-#transport select swd
+# adapter driver cmsis-dap
+# transport select swd
 source [find interface/stlink.cfg]
 transport select hla_swd
 source [find target/stm32f1x.cfg]
@@ -82,6 +89,16 @@ HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 ## 4. PlatformIO 配置
 
+---
+
+### 1. `pio` 安装 stm32f103c8 的库
+
+> Board: STM32F103C8 (20k RAM, 64k Flash) (Generic)
+>
+> 先用 CUBEMX 生成文件再用 PIO
+
+### 2. `ini` 文件配置
+
 ```ini
 [env:genericSTM32F103C8]
 platform = ststm32
@@ -95,9 +112,11 @@ include_dir = ./Core/Inc
 src_dir = ./Core/Src
 ```
 
+### 3. 如何启用 CPP 
+
 > 创建的虽然说可以编译 CPP 文件，但是会找不到 CPP 文件的库文件位置导致没有智能提示，所以创建一个 CPP 配置，激活库文件就行，反正编译啥的也不会用到
 >
-> 第三方库的话，就更加头疼了，但是那些应该和 STM 32 没啥关系，到时候再说吧
+> 涉及到需要操作系统的库是不可以使用的，所以这个就是纯粹的更好用CPP的性质和拥有的数据结构
 
 ![image-20250120004025799](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250120004025799.png)
 
@@ -142,6 +161,8 @@ HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 ## 9. `TIM` 内部中断配置介绍
 
+![image-20250221171858866](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250221171858866.png)
+
 **`Prescaler = 7200 - 1`:**
 
 - 定时器时钟的分频系数。
@@ -177,6 +198,10 @@ htim2.Init.Period = 10000 - 1;			// *同上
 htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
 htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 ```
+
+> 开启定时器中断
+
+![image-20250221171933230](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250221171933230.png)
 
 ## 10. 外部 TIM 配置
 
@@ -717,71 +742,40 @@ else {
 > void HAL_UART_Transmit(&huart1, &Byte, ByteSize, HAL_MAX_DELAY);
 > ```
 
+### 1. 格式化重写函数
+
 ```c
-// 封装的 printf 函数，支持格式化输出
+#include <stdarg.h>
+
 void USART_printf(char *format, ...) {
-    char buffer[256]; // 缓冲区，可以根据需要调整大小
+  char buffer[256]; // 缓冲区，可以根据需要调整大小
 
-    va_list args;
-    va_start(args, format);
-    vsnprintf(buffer, sizeof(buffer), format, args); // 格式化字符串
-    va_end(args);
+  va_list args;
+  va_start(args, format);
+  vsnprintf(buffer, sizeof(buffer), format, args); // 格式化字符串
+  va_end(args);
 
-    // 发送格式化后的字符串
-    UART_SendBytes((uint8_t *) buffer, strlen(buffer));
+  // 发送格式化后的字符串
+  HAL_StatusTypeDef status =
+      HAL_UART_Transmit(&huart1, (uint8_t *)buffer, strlen(buffer), 100);
+
+  if (status != HAL_OK) {
+    char waring[] = "Unable to transmit data to Uart\r\n";
+    HAL_UART_Transmit(&huart1, (uint8_t *)waring, strlen(waring), 100);
+  }
 }
 ```
 
-> 接收数据
->
-> ```c
-> // stm32f1xx_hal_uart.h 重写
-> void void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);
-> ```
 
-```c
-uint8_t Serial_RxFlag, recv_data;
 
-// 是否完成了一次数据的读取
-uint8_t Serial_GetFlag() {
-    if (Serial_RxFlag == 1) {
-        Serial_RxFlag = 0;		// 调用的时候我们重新定义为没有读取数据的状态
-        return 1;
-    }
-    return 0;
-}
+### 2. 重写  `printf` USART 输出
 
-// 到了中断函数会执行下面的内容
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-    if (huart == &huart1) {
-        Serial_RxFlag = 1; // 完成了一次读取
-        HAL_UART_Receive_IT(&huart1, &recv_data, 1);
-    }
-}
-
-int main() {
-    // ...
-    HAL_UART_Receive_IT(&huart1, &recv_data, 1);	// 开启中断版本 uart 接受数据
-    
-    while (1) {
-        if (Serial_GetFlag() == 1) {
-            // 回复数据给 PC
-            USART_printf("Callback data %u from stm32\r\n", recv_data);
-            OLED_ShowHexNum(2, 1, recv_data, 2);
-        }
-    }
+```cpp
+int __io_putchar(int ch) {
+    HAL_UART_Transmit(&huart1, (uint8_t *) &ch, 1, 200);
+    return ch;
 }
 ```
-
-## 2.5 I2C 代码实现
-
----
-
-### 1. 开始和停止信号
-
-
-
-
 
 # 3. 硬件编码原理
 
@@ -799,7 +793,7 @@ int main() {
 
 ![image-20241213191610824](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241213191610824.png)
 
-> 输出比较模式的选择
+### 3.0 PWM 模式
 
 ![image-20241213192614929](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241213192614929.png)
 
@@ -808,6 +802,8 @@ int main() {
 > - 第一个就是翻转，这个可以输出**高低电频**花销时间都一样的波形
 >
 > - PWM，1 2 两个模式唯一的不同就是 1  0 相反
+
+<img src="https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20250303132554211.png" alt="image-20250303132554211" style="zoom:66%;" />
 
 - 参数和原理图
 
@@ -819,25 +815,25 @@ int main() {
 
 2. 频率：
 
-    - 假定计数器的时钟频率是：$f_{clk} = 72\, \text{MHz}$，`PSC =71`用于化整频率
+    - 假定计数器的时钟频率是：$f_{clk} = 72\, \text{MHz}$，`PSC =71`是预分频系数
 
-    - PWM 的频率就是完成一次 ARR 所需要的频率单位时间
+    - `PWM` 的频率就是完成一次 `ARR` 所需要的频率单位时间
 
     - $$
         Freq = \frac{\frac{f_{clk}}{PSC + 1}}{ARR + 1}
         $$
     
-3. 分辨率就是直接 30 作为 1 $\rightarrow$ 1 / (99+1)
+3. 分辨率: 就是一个周期的计数的倒数: 1/99
 
 
 
-#### 3.1  按参数生成 PWM 波形
+### 3.1  按参数生成 PWM 波形
 
 > 这里一个周期是 `1ms` 哈
 
 <img src="https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241215202802169.png" alt="image-20241215202802169" style="zoom:122%;" />
 
-#### 3.2 舵机 PWM 控制原理
+### 3.2 舵机 PWM 控制原理
 
 > 舵机的先对应的接口关系
 
@@ -851,7 +847,7 @@ int main() {
 </div>
 
 
-##### 1. 参数配置
+#### 1. 参数配置
 
 > 舵机的 PWM 必须是 `20 ms`（`50Hz`），高平电的宽度必须在 `0.5~2.5 ms (2.5%~12.5%)` 之间，所以这个就直接的确定了我们的占空比和频率，由此我们计算出对应的参数，`CK_PSC = 72M`
 >
@@ -1145,270 +1141,36 @@ uint8_t GRAM[OLED_PAGE][OLED_COLUMN];	// 缓存数组
 
 > [这个代码修改一下再使用](https://led.baud-dance.com/)
 
-<br>
-
-# 4. 通信
-
----
-
-## 1.常见的通信和性质
-
-![image-20250114113118335](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250114113118335.png)
-
-### 时钟
-
-- **异步通信（Asynchronous）**：通信双方不依赖共享时钟信号，而是通过约定的**波特率（baud rate）**进行数据传输。数据的开始和结束由特定的起始和停止位标识
-
-<img src="https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250114122104776.png" alt="s" style="zoom:74%;" />
-
-- **同步通信（Synchronous）**：发送和接收端共享一个时钟信号，通过时钟同步实现数据传输
-
-![image-20250114122036666](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250114122036666.png)
-
-### 双工
-
-- **全双工**：两个线之间同时可以互相发送数据
-
-![image-20250114113928109](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250114113928109.png)
-
-- **半双工**：发送和接受是同一个线，所以不可以同时满足两个功能，就是这种数据一发一回应的模式，所以才有这种 **主从模式**
-
-![image-20250114114043417](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250114114043417.png)
 
 
-
-### 电平
-
-- **单端通信**：数据通过一个信号线和一个公共地线传输。常见的 RS-232 串口通信属于单端通信。
-- **差分通信**：数据通过两根电平互补的信号线传输，例如 RS-485 接口，抗干扰能力更强。
-
-### 设备
-
-**点对点通信**：两个设备直接进行通信，双方之间不存在其他中介设备。USART 通信通常是点对点的，如电脑和 STM32 之间的串口通信
-
-**多设备通信**：指在一个通信网络中，多个设备相互传递数据的通信模式。多设备通信通常包括多方参与，可以是点对多点、广播或点到点的组合
-
-<br>
-
-## 2. USRT 通信
+## 3.10 PWR
 
 ---
 
-### 1. USRT 的性质
+> 低功耗模式包括 **睡眠模式（Sleep）、停机模式（Stop）和待机模式（Standby）**，可在系统空闲时，降低STM32的功耗，延长设备使用时间
 
-> 交叉这一点非常的重要，我们 STM 32 的串口和 COM3 的端口要注意交叉
+### 1. 低功耗模式
 
-![image-20250104183706554](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250104183706554.png)
+> 从上到下是越来越省电的，但是同时也是越来越难唤醒的
 
-<img src="https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250104123126284.png" alt="image-20250104123126284" style="zoom:70%;" />
+![image-20250130192455849](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250130192455849.png)
 
-### 2. 电平标准
+### 2. 模式选择的判断流程图
 
-> 电平标准是数据`1`和数据`0`的表达方式
+![{8EE8F416-63E5-4EF2-8692-30093D55FF23}](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/%7B8EE8F416-63E5-4EF2-8692-30093D55FF23%7D.png)
 
-- TTL电平：`+3.3V`或`+5V`表示 1，`0V` 表示 0
+### 3. 不同模式的不同特性
 
-- RS232电平：`-3~-15V`表示 1，`+3~+15V`表示 0
-
-- RS485电平：两线压差`+2~+6V`表示 1，`-6~-2V`表示 0（差分信号）
-
-### $\textcolor{pink}{3. 串口参数和时序}$
-
-![image-20250104124042931](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250104124042931.png)
-
-> 波特率：每隔多少时间发送一个电平
->
-> - 波特率换时间就是：$\frac{1}{波特率} \times 10^6 \mu s$
-> - $波特率 = \frac{f_{PCLK2/1}}{16 \times DIV}$
->
-> 起始位：一开始是啥电平，一般是低电平，因为我们一开始是一直是高电平，然后我们转低电平告诉我们数据开始传输了
->
-> 数据位：譬如说我要发送，`0x0F -> 0000 1111`，因为**低位先行**所以发送的数据其实是：`1111 0000`，虽然说发送的是反过来的，但是接受的 RX 是接受然后右移，所以最后接受的数据会再翻转一次，结果仍然是正的
->
-> 校验码：[参考这个视频](https://www.bilibili.com/video/BV1HbSBYGEAQ/?spm_id_from=333.337.search-card.all.click&vd_source=b47817c1aa0db593f452034d53d4273a)，因为我们采用的实际上是 奇偶效验，更好的方法可以参考 CRC 校验
+| **特性**          | **Sleep 模式** | **Stop 模式**                   | **Standby 模式**               |
+| ----------------- | -------------- | ------------------------------- | ------------------------------ |
+| **功耗**          | 较高           | 较低                            | 最低                           |
+| **唤醒时间**      | 最短           | 较短                            | 较长                           |
+| **CPU 状态**      | 停止运行       | 停止运行                        | 停止运行                       |
+| **外设状态**      | 外设继续运行   | 外设时钟停止                    | 外设时钟停止                   |
+| **SRAM 和寄存器** | 保持           | 保持                            | 丢失（备份寄存器保持）         |
+| **唤醒源**        | 任意中断或事件 | 外部中断、RTC 闹钟、WKUP 引脚等 | WKUP 引脚、RTC 闹钟、NRST 复位 |
+| **时钟配置**      | 保持           | 需重新配置                      | 需重新配置                     |
+| **备份域**        | 保持           | 保持                            | 保持                           |
+| **典型应用场景**  | 短时低功耗     | 中等低功耗                      | 深度低功耗                     |
 
 <br>
-
-## 3. I2C 通信
-
----
-
-### 1. I2C 的性质
-
-> - I2C（Inter IC Bus）是由`Philips` 公司开发的一种通用数据总线
-> - 两根通信线：SCL（Serial Clock）、SDA（Serial Data）
-> - 带数据应答
-> - 支持总线挂载多设备（**一主多从**、多主多从），我们主要学习第一种模式
-
-![image-20250114120856778](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250114120856778.png)
-
-<br>
-
-### 2. 一主多从模式
-
-> ### 防止短路的规定
->
-> - 设备的SCL和SDA均要配置成**开漏输出模式**
->
-> - SCL和SDA各添加一个**上拉电阻**，阻值一般为4.7KΩ左右
-
-<img src="https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250114121136522.png" alt="image-20250114121136522" style="zoom:67%;" />
-
-### 3. 基本时序
-
----
-
-#### 3.1 开始和停止条件
-
-- **起始条件**：SCL**高电平**期间，SDA从高电平切换到低电平
-
-![image-20250114122440066](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250114122440066.png)
-
-- **终止条件**：SCL**高电平**期间，SDA从低电平切换到高电平
-
-![image-20250114122551051](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250114122551051.png)
-
-#### 3.2 发送一个字节
-
-> **从机**SCL**低电平**期间，**主机**将数据位依次放到SDA线上（高位先行），然后释放SCL，**从机将在SCL高电平期间读取数据位**，*所以SCL高电平期间SDA不允许有数据变化*，依次循环上述过程8次，即可发送一个字节
->
-> SCL 是一个垂直运输机，SDA 就是这个运输机上的东西，一开始就是被放下来准备接东西（低电平），上升去之后（就变成高电平了），就把东西给给运走了。然后还没有放下来运下一次的东西之前，我们不允许放下一次的东西。
->
-> 我们的东西排布一开始是 0 1 2 3 4 5 6 7 8，但是接受的肯定是先拿到 0，所以他们哪里的排序就是 8 7 6 5 4 3 2 1 0，也就是所谓的**高位先行**
-
-![image-20250114123754375](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250114123754375.png)
-
-- SDA 在 SCL 低电平发生了变化，于是 SCL 拉高，然后读取 SDA 电平
-
-
-
-#### 3.3 接受一个字节
-
-> 这里主从的关系换一下，发送是从，接受是主
->
-> **主机**SCL低电平期间，**从机**将数据位依次放到SDA线上（高位先行），然后释放SCL，主机将在SCL**高电平期间读取**数据位，所以SCL高电平期间SDA不允许有数据变化，依次循环上述过程8次，即可接收一个字节（主机在接收之前，需要释放SDA）
-
-![image-20250114125425769](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250114125425769.png)
-
-#### 3.4 ACK
-
-> - **发送应答**：**主机**在**接收完**一个字节之后，在下一个时钟等待**从机发送一位数据**，数据 0 表示应答，数据 1 表示非应答
-> - **接收应答**：主机在**发送完**一个字节之后，在下一个时钟等待**主机接收一位数据**，判断从机是否应答，数据 0 表示应答，数据1 表示非应答*（主机在接收之前，需要释放SDA）*
-
-![image-20250114131351181](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250114131351181.png)
-
-**应答的典型情况示意**
-
-| 操作           | 数据方向    | 谁发送 ACK/NACK   | 说明                                     |
-| -------------- | ----------- | ----------------- | ---------------------------------------- |
-| 地址帧         | 主机 → 从机 | 从机发送 ACK      | 地址匹配则从机响应，否则 NACK            |
-| 数据帧（写入） | 主机 → 从机 | 从机发送 ACK      | 从机接收数据成功，否则 NACK              |
-| 数据帧（读取） | 从机 → 主机 | 主机发送 ACK/NACK | 主机需要更多数据发送 ACK，结束时发送 NAC |
-
-<br>
-
-### 4. 一帧完整的数据
-
----
-
-#### 1. 写数据帧
-
->  **R/W 标志位**：写操作为 `0`
->
-> **应答位 1 （ACK）**：
->
-> - 从机接收到地址帧后，如果识别出自己的地址，会拉低 SDA，表示 ACK（应答）
-> - 如果没有从机响应，则 SDA 保持高电平，表示 NACK
->
-> **应答位 2（ACK/NACK）**：
->
-> - 从机接收数据后，若接收成功，会返回 ACK。
-> - 如果接收失败或从机不准备继续通信，会返回 NACK。
-
-![image-2025011413160+5578](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250114131605578.png)
-
-- 简化表示
-
-```scss
-// ... 表示重复的 | Data (8 bits) | ACK |
-| Start | Address (7/10 bits) + Write(0) | ACK | Data (8 bits) | ACK | ... | Stop |
-```
-
-<br>
-
-#### 2. 读数据帧
-
-> **应答位 1（ACK）**：
->
-> - 从机识别出地址后，会拉低 SDA，表示 ACK。
->
-> **应答位 2（ACK/NACK）**：
->
-> - 主机接收到数据后，若需要继续接收数据，会发送 ACK。
-> - 若不需要继续接收数据，则发送 NACK。
-
-```scss
-| Start | Address (7/10 bits) + Read(1) | ACK | Data (8 bits) | ACK/NACK | ... | Stop |
-```
-
-- 设备地址是厂商给我们的，所以可以查手册找到，然后我们的地址一般都是 7 位，所以一共有 $2^7 -1$ 那么多个
-- 当然如果不同硬件的设备地址重复了，也可以自己修改，可以通过电路硬件改变低位，实现改变数据
-
-#### 3. 复合数据帧
-
-> 这里你会发现一个有意思的问题，就是我们的读取数据和写数据不一样，写数据还得指定寄存器的地址，然后才可以开始，但是读数据没有指针，那他咋找到的呢？
->
-> 实际上就是根据上一次写入数据到哪里，他才读取哪里，所以为了确保我们一定读取在对的寄存器的位置，我们就有了下面的格式，复合格式
->
-> 即写数据帧但是删除掉要写入的数据部分 + 完整的读数据帧
-
-![image-20250114143504008](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250114143504008.png)
-
-```scss
-// Slave
-| Start | Address (7/10 bits) + Write(0) | ACK | Reg Address (8 bits) | ACK |
-+
-// Master
-| Repeated Start | Address (7/10 bits) + Read(1) | ACK | Data (8 bits) | ACK/NACK | Stop |
-```
-
-<br>
-
-## 4. SPI 通信
-
-> - SPI（Serial Peripheral Interface）是由Motorola公司开发的一种通用数据总线
-> - 四根通信线：SCK（Serial Clock）、MOSI（Master Output Slave Input）、MISO（Master Input Slave Output）、SS（Slave Select）
-> - 同步，全双工
-> - 支持总线挂载多设备（一主多从）
-
-### 1. 硬件电路
-
-> 因为是全双工，所以和 SDA 不太一样，有两个线来接受输入和输出，而且选择从机也不再想 I2C 一样发送地址到从机看有无应答，而是直接使用 SS 线去找从机，相当于一个从机设备一根单独的线，给对应的 SS 高电平就是去找对应的从机
->
-> **输出引脚**配置为**推挽输出（PP）**，输入引脚配置为浮空或**上拉输入**，所以电路高电平驱动很强，上升速度快
-
-<img src="https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250119103908324.png" alt="image-20250119103908324" style="zoom:67%;" />
-
-### 2. SPI 移位示意图
-
-> SPI（串行外设接口）通信中的数据传输过程是基于移位寄存器的，它通过时钟信号（SCK）同步传输数据
->
-> 高电平的时候输出数据，低电平的时候读取数据，两个数据的轮流的读取写入，实现了数据的交换，所以 SPI 的数据就是这么一个数据交换的过程，**也就实现了发送的时候同时接受**
->
-> 如果我们只想发送，那就不管接受的数据就好，如果我们只想接受，那就发送 `0x00` 等没用数据就行，所以有点浪费，因为i我们在做单独的 I/O 的时候，其实不需要两个线的资源都使用，没必要交换数据
-
-<img src="https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250119104938946.png" alt="image-20250119104938946" style="zoom:67%;" />
-
-> 效果演示
-
-<img src="https://i-blog.csdnimg.cn/blog_migrate/08aeef78767d385476a91f849b155617.gif" alt="img" style="zoom:67%;" />
-
-### 3. SPI 时序
-
----
-
-#### 1. 起始和终止条件
-
-> 相对于 $I^2C$ 确实简单许多，不需要 SDA 和 SCL 同时配合了
-
-![image-20250119105815077](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250119105815077.png)

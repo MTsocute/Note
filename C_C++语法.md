@@ -2,6 +2,8 @@
 
 ---
 
+1. [move 运算符的作用](https://www.bilibili.com/video/BV16F411C7bd?spm_id_from=333.788.player.switch&vd_source=b47817c1aa0db593f452034d53d4273a&p=2)
+
 <br>
 
 ## 1. 基础用法
@@ -266,818 +268,6 @@ int main()
 
 ![image-20250120165039147](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250120165039147.png)
 
-## 2. 类
-
-----
-
-> 对象编程（OOP）中的三个基本特性之一（封装、继承、多态）
-
-### 2.1 delete 禁止某些成员函数
-
-> `delete` 关键字不仅仅限制在**操作符函数**上，也可以用来删除任何**特殊成员函数**，包括普通成员函数
-
-```c++
-class MyClass {
-public:
-    MyClass() = default;
-    
-    // 禁止拷贝构造
-    MyClass(const MyClass&) = delete;
-    
-    // 禁止赋值操作符
-    MyClass& operator=(const MyClass&) = delete;
-};
-```
-
-> 删除**特殊成员函数**
-
-```c++
-class MyClass {
-public:
-    void doSomething(int) = delete;   // 禁止带有 int 参数的 doSomething 函数
-    void doSomething(double) {}       // 允许带有 double 参数的 doSomething 函数
-};
-```
-
-> 禁止**拷贝和移动构造一个新的类**
-
-```cpp
-TCP_Server(const TCP_Server &other) = delete;
-TCP_Server operator=(const TCP_Server &other) = delete;
-TCP_Server(TCP_Server&&) = delete;  // 禁止移动构造
-TCP_Server& operator=(TCP_Server&&) = delete;  // 禁止移动赋值
-```
-
-### 2.2 类的静态成员函数
-
-> #### 什么时候使用静态成员函数？
->
-> - **无状态操作**：如果函数执行的操作与特定对象无关，不需要访问对象的成员变量或非静态成员函数，那么它可以被声明为静态函数。
-
-```c++
-class MathUtils {
-public:
-    // 静态成员函数，可以在不实例化对象的情况下调用
-    static int add(int a, int b) {
-        return a + b;
-    }
-
-    // 非静态函数，需要对象实例才能调用
-    int multiply(int a, int b) {
-        return a * b * rd;
-    }
-private:
-    int rd = rand() % 100;
-};
-
-int main() {
-    // 调用静态成员函数，不需要创建 MathUtils 的实例
-    std::cout << "3 + 4 = " << MathUtils::add(3, 4) << std::endl;
-
-    // 需要创建对象才能调用非静态成员函数
-    MathUtils utils;
-    std::cout << "3 * 4 = " << utils.multiply(3, 4) << std::endl;
-
-    return 0;
-}
-```
-
-> 类内静态函数是独一份，不论生成了多少个类，公用的都是同一个
->
-> 下面这个案例，你会发现输出地址都是一样的
-
-```c++
-class Demo {
-public:
-    // 静态成员函数
-    static constexpr int add(int a, int b) { return a + b; }
-
-    // 输出 add 函数的地址
-    void printAddAddress() {
-        std::cout << "Address of add from instance: " << 
-            reinterpret_cast<void*>(&Demo::add) << std::endl;
-    }
-};
-
-int main() {
-    Demo demo1;
-    Demo demo2;
-
-    // 比较地址
-    demo1.printAddAddress();
-    demo2.printAddAddress();
-
-    // 直接获取静态函数地址
-    std::cout << "Address from Demo::add: " <<
-        reinterpret_cast<void*>(&Demo::add) << std::endl;
-
-    return 0;
-}
-
-```
-
-### 2.3 explicit
-
-> 避免隐式的生成一个类
-
-```c++
-class MyClass {
-public:
-    // 没有 explicit 的构造函数
-    MyClass(int x) {
-        std::cout << "MyClass constructor called with x = " << x << std::endl;
-    }
-};
-
-int main() {
-    MyClass obj = 42; // 隐式调用构造函数
-}
-```
-
-<br>
-
-### 2.4 类的类型转换
-
----
-
-#### 2.4.1 向上转换
-
-```c++
-// 基类和派生类之间的转换（向上转换）
-class Base {
-public:
-    virtual void show() { cout << "Base class" << endl; }
-};
-
-class Derived : public Base {
-public:
-    void show() { cout << "Derived class" << endl; }
-};
-
-Derived derivedObj;
-// Derived* -> Base*: 派生转换基类
-Base* basePtr = static_cast<Base*>(&derivedObj);  
-// 使用派生对象转换基类，使用基类的方法
-basePtr->show();
-```
-
-```c++
-Base* base = new Derived();
-
-// 基类指针到派生类指针的转换
-Derived* derived = dynamic_cast<Derived*>(base);
-
-if (derived) {
-    cout << "dynamic_cast 成功: ";
-    derived->show();
-} 
-else cout << "dynamic_cast 失败" << endl;
-
-delete base;
-```
-
-#### 2.4.2 向下转换
-
-> `dynamic_cast` 主要用于具有虚函数的多态类型的指针或引用之间的转换，尤其适用于**基类和派生类之间的安全向下转换**。
->
-> 如果转换失败，指针会返回 `nullptr`，引用则抛出异常
-
-```c++
-// 非多态类型的转换示例
-Base* nonPolymorphic = new Base();
-// 基类转换到派生类（向下转换）
-derived = dynamic_cast<Derived*>(nonPolymorphic);
-
-if (derived) derived->show();
-else cout << "dynamic_cast 对非多态类型转换失败" << endl;
-delete nonPolymorphic;
-```
-
-### 2.5 有元函数
-
-> 友元函数可以访问类中的私有数据和方法，这样可以在不暴露这些成员的情况下提供特定功能。
->
-> 但是是要把类对象作为参数导入的时候哈
-
-```c++
-class MyClass; // 前向声明
-
-class FriendClass {
-public:
-    void display(MyClass &obj); // 声明友元函数
-};
-
-class MyClass {
-private:
-    int value;
-
-public:
-    MyClass(int val) : value(val) {}
-
-    // 声明 FriendClass 为友元
-    friend class FriendClass; 
-};
-
-void FriendClass::display(MyClass &obj) {
-    cout << "MyClass 的私有值: " << obj.value << endl; // 访问私有成员
-}
-
-int main() {
-    MyClass myObj(42);
-    FriendClass friendObj;
-    friendObj.display(myObj); // 调用友元函数
-
-    return 0;
-}
-```
-
-
-
-### 2.6 `virtual`
-
----
-
-#### 1. 基本概念
-
-> 虚函数的关键点是**动态绑定**（也叫运行时绑定）。
->
-> 在没有 `virtual` 的情况下，C++ 的函数调用是**静态绑定**（也叫编译时绑定），即编译器在编译时就确定了调用哪个函数。而 `virtual` 会告诉编译器，**函数调用要在运行时根据对象的实际类型来确定**
-
-```cpp
-#include <iostream>
-using namespace std;
-
-class Animal {
-public:
-    virtual void makeSound() {  // 虚函数
-        cout << "Animal makes sound" << endl;
-    }
-};
-
-class Dog : public Animal {
-public:
-    void makeSound() override {  // 重写虚函数
-        cout << "Dog barks" << endl;
-    }
-};
-
-class Cat : public Animal {
-public:
-    void makeSound() override {  // 重写虚函数
-        cout << "Cat meows" << endl;
-    }
-};
-
-void playSound(Animal* animal) {
-    animal->makeSound();  // 动态绑定
-}
-
-int main() {
-    Dog dog;
-    Cat cat;
-
-    playSound(&dog);  // 输出：Dog barks
-    playSound(&cat);  // 输出：Cat meows
-
-    return 0;
-}
-```
-
-#### 2. 虚函数的规则
-
-**必须通过指针或引用调用**：如果直接通过对象调用，仍然是静态绑定。
-
-**重写时函数签名必须一致**：
-
-- 参数和返回值类型必须匹配。
-- 可以使用 `override` 关键字来明确地表明重写行为。
-
-```cpp
-void display() override;  // 推荐使用
-```
-
-**虚函数只能存在于类中**：全局函数不能声明为虚函数
-
-**如果一个类有虚函数，其析构函数通常也应声明为虚函数**：避免通过基类指针删除派生类对象时资源释放不完全的问题。
-
-```cpp
-class Base {
-public:
-    // 析构函数声明为虚类
-    virtual ~Base() { std::cout << "Base destroyed\n"; }
-};
-
-class Derived : public Base {
-public:
-    ~Derived() { std::cout << "Derived destroyed\n"; }
-};
-```
-
-#### 3. 纯虚函数
-
-> 如果一个类中的虚函数不需要具体实现，可以声明为 **纯虚函数**，用 `= 0` 表示
->
-> 带有纯虚函数的类是**抽象类**，不能直接实例化。它通常用作接口，让派生类实现特定功能。
-
-```cpp
-class Payment {
-public:
-    virtual void process() = 0;  // 纯虚函数，提供统一接口
-};
-
-class CreditCard : public Payment {
-public:
-    void process() override {
-        cout << "Processing credit card payment" << endl;
-    }
-};
-
-class PayPal : public Payment {
-public:
-    void process() override {
-        cout << "Processing PayPal payment" << endl;
-    }
-};
-
-// 客户端代码
-void checkout(Payment* payment)	// 动态绑定 
-{
-    payment->process();  // 统一调用接口
-}
-
-int main() {
-    CreditCard cc;
-    PayPal pp;
-
-    checkout(&cc);  // 输出：Processing credit card payment
-    checkout(&pp);  // 输出：Processing PayPal payment
-    return 0;
-}
-```
-
-### 2.7 类成员函数 const 
-
-> 我们的成员函数是可以访问类的成员变量，有了这个 const 声明的成员函数是不可以修改类变量的
-
-```cpp
-class Client : public QWidget {
-public:
-    explicit Client(QWidget *parent = nullptr);
-    ~Client() override;
-
-private slots:
-    // 你会发现所有的成员函数的后面都有 const
-    void clicked_on_connect_button() const;
-    void open_chat_box() const;
-
-private:
-    Ui::Client *ui;
-    Form *chat;
-    QTcpSocket *socket;
-};
-```
-
-### 2.8 父类的如果没有无参的默认构造的继承注意事项
-
-> 在 C++ 中，如果一个子类继承了一个父类，并且父类没有默认构造函数（即只有带参的构造函数），那么子类的构造函数确实需要显式地调用父类的构造函数并传递适当的参数。
-
-```cpp
-class Parent {
-public:
-    Parent(int x) { 
-        // 带参数的构造函数
-    }
-};
-
-class Child : public Parent {
-public:
-    // 在实现自己构造的同时并需要实现父类的默认构造函数
-    Child(int x) : Parent(x) {  // 必须显式调用父类构造函数并传递参数
-        // 子类的构造函数
-    }
-};
-
-```
-
-> 所以 `QT` 很多的时候都一个 `parent` 参数==
-
-```cpp
-// 继承于 QMainWindow 所以要实现其父类的构造函数传入 parent
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
-    ui->setupUi(this);
-	...
-}
-```
-
-### ==2.9 `构造/析构` 在不同环境下的影响==
-
-> 在 C++ 中，构造函数和析构函数的访问权限（`public`、`protected`、`private`）决定了**谁能创建或销毁对象**。
->
-> ### **访问权限的影响：**
->
-> - `public` 构造/析构函数：
->     - **任何地方**都可以创建或销毁对象。
-> - `protected` 构造/析构函数：
->     - **类内部和子类**可以创建或销毁对象，但类外部无法直接创建或销毁。
-> - `private` 构造/析构函数：
->     - **只有类自身**可以创建或销毁对象，**外部和子类都无法直接创建或销毁对象**。
->
-> ### **总结：**
->
-> - `public` 构造/析构函数：默认方式，外部可以直接创建和销毁对象。
-> - `protected` 构造/析构函数：只允许子类或内部创建，外部不能直接操作。
-> - `private` 构造/析构函数：外部完全不能创建或销毁对象，常用于**单例模式**或**工厂方法**模式。
-> - **析构函数设为 `private` 时，要小心内存泄漏问题**，需要提供类内部的释放机制（例如静态方法）。
-
-#### 1. **`protected` 构造函数**（子类可以创建，但类外不能）
-
-```cpp
-class A {
-protected:
-    A() { cout << "A 的构造函数" << endl; }
-};
-
-class B : public A {
-public:
-    B() { cout << "B 的构造函数" << endl; }
-};
-
-int main() {
-    // A a;  // 错误，无法直接创建 A 的对象
-    B b;  // 但是可以通过子类 B 创建
-    return 0;
-}
-```
-
-#### 2. **`private` 构造函数**（无法创建对象，只能内部创建）
-
-> 常用于单例模式，确保创建的对象唯一的手段
-
-```cpp
-class A {
-private:
-    A() { cout << "A 的构造函数" << endl; }
-
-public:
-    static A create() {  // 提供静态函数间接创建对象
-        return A();
-    }
-};
-
-int main() {
-    // A obj;  // 错误，无法直接创建 A
-    A obj = A::create();  // 可以通过静态函数创建
-    return 0;
-}
-```
-
-#### 3. `private` 析构函数
-
-> 常用于单例模式或禁止外部删除对象
-
-```cpp
-class A {
-private:
-    ~A() { cout << "A 的析构函数" << endl; }
-
-public:
-    static A* create() { return new A(); }
-};
-
-int main() {
-    A* obj = A::create();
-    // delete obj;  // 错误！析构函数是 private，无法 delete
-    return 0;
-}
-```
-
-
-
-<br>
-
-## 3. 设计模式
-
-----
-
-### 3.1 类创建实例的方式
-
-> 在认识单例模式之前，先看下一个类有哪些方式创建一个实例
-
-```c++
-class MyClass {
-public:
-    MyClass() { std::cout << "Constructor called" << std::endl; }
-    ~MyClass() { std::cout << "Destructor called" << std::endl; }
-};
-```
-
-#### **1. 自动分配（栈分配）**
-
-```c++
-int main() {
-    MyClass obj;  // 在栈上分配对象
-    return 0;     // 作用域结束时 obj 自动销毁
-}
-```
-
-#### **2. 动态分配（堆分配）**
-
-```c++
-int main() {
-    MyClass* obj = new MyClass();  // 在堆上分配对象
-    // 使用对象
-    delete obj;  // 手动销毁对象，释放内存
-    return 0;
-}
-
-// 智能指针版本
-int main() {
-    std::unique_ptr<MyClass> obj = std::make_unique<MyClass>();  // 自动管理生命周期
-    // 不需要手动 delete
-    return 0;
-}
-```
-
-#### 3. 拷贝构造函数
-
-> 对于比较简单的类，自带的拷贝构造能做到，除非你的数据类型不简单
-
-```c++
-class MyClass {
-public:
-    int x;
-    MyClass(int val) : x(val) {}
-};
-
-int main() {
-    MyClass obj1(10);  // 创建对象 obj1
-    MyClass obj2 = obj1;  // 使用拷贝构造函数创建 obj2
-    return 0;
-}
-```
-
-> 譬如下面这个
-
-```c++
-class MyClass {
-public:
-    // 构造函数
-    MyClass(int val) : data(new int(val)) {}
-
-    // 自定义拷贝赋值运算符
-    MyClass& operator=(const MyClass& other) {
-        if (this != &other) {  // 防止自我赋值
-            delete data;  // 释放旧资源
-            data = new int(*(other.data));  // 深拷贝
-        }
-        return *this;
-    }
-
-    ~MyClass() {
-        // 释放动态内存
-        delete data;  
-    }
-private:
-    int* data = nullptr;
-};
-
-int main() {
-    MyClass obj1(10);
-    MyClass obj2(20);
-
-    obj2 = obj1;  // 调用拷贝赋值运算符
-    return 0;
-}
-```
-
-> **智能指针版本**
-
-```c++
-class MyClass {
-public:
-    // 构造函数，使用 std::make_unique 创建 unique_ptr
-    MyClass(int val) : data(std::make_unique<int>(val)) {}
-
-    // 自定义拷贝赋值运算符
-    MyClass& operator=(const MyClass& other) {
-        if (this != &other) {  // 防止自我赋值
-            data = std::make_unique<int>(*(other.data));  // 深拷贝
-        }
-        return *this;
-    }
-
-// 使用默认析构函数即可，unique_ptr 会自动释放内存
-private:
-    std::unique_ptr<int> data;  // 使用 unique_ptr 代替裸指针
-};
-
-int main() {
-    MyClass obj1(10);
-    MyClass obj2(20);
-
-    obj2 = obj1;  // 调用拷贝赋值运算符
-    return 0;
-}
-```
-
-#### 4. 移动构造函数
-
-> 在 C++11及以后的版本中，**移动构造函数**允许通过**移动语义**来创建对象，避免不必要的拷贝，提高效率。
->
-> **是升级版本的拷贝构造函数**
->
-> 移动构造函数通常在涉及临时对象或右值引用时使用
-
-```c++
-class MyClass {
-public:
-    MyClass() {}
-    // 右值运算符接受 std::move() 变量
-    MyClass(MyClass&& other) { /* 这里执行移动逻辑 */ }
-};
-
-int main() {
-    MyClass obj1;
-    // 相当于 MyClass obj2 (std::move(obj1));
-    MyClass obj2 = std::move(obj1);  // 使用移动构造函数
-    return 0;
-}
-```
-
-
-
-### 3.2单例模式
-
-> 所以你会发现，他和前面几个最大的不同，就是他虽然也是函数返回一个类别，但不是通过默认的几个
->
-> 而是自己用函数在里面创建了一个静态实例然后再返回
->
-> 因为类内使用 static 所以，返回的对象其实都是同一个
-
-```c++
-class Singleton {
-public:
-    // 获取单例实例的函数
-    static Singleton& get_instance() {
-        static Singleton instance;  // 静态局部变量，确保只初始化一次
-        return instance;
-    }
-
-    // 禁止拷贝构造和赋值操作
-    Singleton(const Singleton&) = delete;
-    Singleton& operator=(const Singleton&) = delete;
-
-    void show() {
-        std::cout << "Singleton instance at address: " << this << std::endl;
-    }
-
-private:
-    // 私有构造函数，防止外部创建对象
-    Singleton() = default;
-};
-
-int main() {
-    // 通过 get_instance 获取单例对象
-    Singleton& instance1 = Singleton::get_instance();
-    Singleton& instance2 = Singleton::get_instance();
-
-    // 显示两个实例的地址
-    instance1.show();  // 输出：Singleton instance at address: 0x<some address>
-    instance2.show();  // 输出：Singleton instance at address: 0x<same address>
-
-    return 0;
-}
-```
-
-**一般的两种模式**
-
-> ### **懒汉模式（Lazy Initialization Singleton）**
->
-> 在懒汉模式下，实例的创建是**延迟**的，只有在第一次访问实例时才会创建。这种方式的优点是资源节约：如果从未使用这个实例，就不会浪费内存或其它资源
->
-> ### **饿汉模式（Eager Initialization Singleton）**
->
-> 在饿汉模式下，实例在程序启动时就**立即**被创建，不管后面是否会用到。**这种方式可以避免多线程问题，因为实例在程序一开始就存在。**
-
-```c++
-class log {
-public:
-    // 禁止拷贝构造和复制构造函数 --> 不通过他们这些方式，只有函数返回
-    log(const log & log) = delete;
-    log & operator=(const log & log) = delete;
-
-   /* 注意这里我们是通过一个类函数直接返回一个实例 */
-    
-    // 这里是 *饿汉模式*
-    static log & get_instance1() {
-        static log * instance = nullptr;	// 一开始案例就存在，不管有没有给分配空间
-
-        if (!instance) instance = new log();
-
-        return *instance;
-    }
-
-    // 这里是 *懒汉模式*
-    static log & get_instance2() {
-        // 一开始就创建出了实例
-        static log _log;		// 这个需要构造函数，才能写哈
-        return _log;
-    }
-private:
-	log() = default;	// 这里如果考虑继承的话，最好放在 protect 下面，防止子类无法构造父类
-};
-```
-
-### 3.3 CRTP 机制
-
-> 这个机制就是，即便我们当下类还没写好，我们其实可以把它作为模板参数传递了
->
-> 下面的 singleton 是一个模板类，模板参数就是我们构造类的自己
-
-```cpp
-// CRTP：虽然说虽然说我们的 HttpManger 还没有写好，但是我们可以把自己作为模板参数类型传递了
-class HttpManger : public QObject, public singleton<HttpManger> {
-	// ...
-};
-```
-
-### 3.4 类模板单例模式和对应的问题
-
----
-
-#### 1. 类模板单例模式
-
-```cpp
-template<class T>
-class singleton {
-protected:
-    singleton() = default;
-    // 单例设计模式
-    singleton(const singleton<T> &) = delete;
-    singleton &operator=(const singleton<T> &) = delete;
-
-    static std::shared_ptr<T> _instance; // 使用是这一个实例
-
-public:
-    // 防止多线程的时候，初始化的单例不唯一，使用懒汉模式
-    static std::shared_ptr<T> getInstance() {
-        static std::once_flag flag;
-        std::call_once(flag, [&]() {
-            if (_instance == nullptr) {
-                _instance = std::make_shared<T>();
-            }
-        });
-        return _instance;
-    }
-
-    void printAddress() { std::cout << _instance.get() << std::endl; }
-
-    ~singleton() { std::cout << "this is singleton destruct" << std::endl; }
-};
-
-
-// 初始化，单例模式的构造函数是防止外部使用的，所以我们初始化比较特殊
-template<class T>
-std::shared_ptr<T> singleton<T>::_instance = nullptr;
-```
-
-#### 2. 类模板单例模式的继承问题
-
-> 我们先看一个继承了单例模式的 CRTP 机制的案例
->
-> 单例模式的析构函数在 private 下面的，所以根据 2.9 我们知道，单例模式的释放其实都是依靠别的方法的
->
-> 我们没有给单例模式静态的释放方法，所以我们的释放基本是绑定子类的析构的，如果你子类的析构都是私有，那么这个单例类是彻底是释放不掉了
-
-```cpp
-// 这里的 singleton 
-class HttpManger : public QObject, public singleton<HttpManger> {
-public:
-    ~HttpManger();	// 要注意这里的析构必须是公有的，因为父类的析构在 private 下
-private:
-    HttpManger();	// 父类的构造在 protect 可以访问到
-};
-```
-
-> 我们子类的构造函数是存放在 private 下面的，问题处在父类的这个代码里面
-
-```cpp
-_instance = std::make_shared<T>(new T);
-```
-
-> `new T` 的时候 T 是 httpManger，会使用子类的构造函数，但是子类的构造函数是存储在 private 下面的，所以需要使用 friend 让父类可以访问到构造函数
-
-```cpp
-// 这里的 singleton 
-class HttpManger : public QObject, public singleton<HttpManger> {
-public:
-    ~HttpManger();	// 要注意这里的析构必须是公有的，因为父类的析构在 private 下
-private:
-    friend class Singleton<HttpManger>;     // base class as friend to access child's construct function
-    HttpManger();	// 父类的构造在 protect 可以访问到
-};
-```
-
 
 
 ## 4. 文件操作
@@ -1190,6 +380,49 @@ int main() {
 
     return 0;
 }
+```
+
+### 4.3 IO 流
+
+> 我们一般用的类就是继承了 `iostream` 的部分, 因为他们这些可以对输入输出都有操作
+>
+> 但是他们服务的对象不同 : 
+>
+> 1. `iostream`: 标准输入输出
+> 2. `fstream`: 文件对象
+> 3. `stringstream`: 字符
+
+![在这里插入图片描述](https://i-blog.csdnimg.cn/blog_migrate/0aec288d4cfe78b0462954e833fc9cb1.png)
+
+#### 1. stringstream 使用场景
+
+- 按分隔符切割字符串
+
+```cpp
+std::string input = "one two three four";
+std::stringstream ss(input);
+std::string word;
+
+while (std::getline(ss, word, ' ')) {  // 按空格分割
+    std::cout << word << std::endl;
+}
+```
+
+- 从流中读取多种数据类型
+
+```cpp
+std::string input = "123 456.78 hello";
+std::stringstream ss(input);
+
+int int_part;
+double double_part;
+std::string str_part;
+
+ss >> int_part >> double_part >> str_part;  // 读取不同类型的数据
+
+std::cout << "Integer: " << int_part << std::endl;
+std::cout << "Double: "  << double_part << std::endl;
+std::cout << "String: "  << str_part << std::endl;
 ```
 
 
@@ -1332,7 +565,7 @@ int add(const int a, const int b) { return a + b; }
 using my_int_func = function<int(int, int)>;
 
 // 函数指针作为参数传递
-int demo1(const my_int_func &op, int a, int b) {
+int demo1(const my_int_func &op, int a, int b) {	// 注意这里的函数指针 & 用法
     return op(a, b);
 }
 
@@ -1715,4 +948,68 @@ target_link_libraries(untitled PRIVATE
 ```
 
 
+
+### 8. 常用的代码整理模板
+
+```yaml
+# Generated from CLion C/C++ Code Style settings
+---
+Language: Cpp
+BasedOnStyle: LLVM
+AccessModifierOffset: -4
+AlignConsecutiveDeclarations: false # 声明对齐
+AlignConsecutiveAssignments: true  # 赋值对齐
+AlignConsecutiveMacros: AcrossEmptyLinesAndComments # define 对齐
+AlignOperands: true
+AlignTrailingComments: true   # 行尾注释对齐
+CommentPragmas: '^MARK:'  # 保留特殊注释格式
+AlwaysBreakTemplateDeclarations: Yes
+BraceWrapping: 
+  AfterCaseLabel: false
+  AfterClass: true      # 类 { 换行
+  AfterControlStatement: false
+  AfterEnum: false
+  AfterFunction: true   # 函数后 { 换行
+  AfterNamespace: false
+  AfterStruct: false
+  AfterUnion: false
+  AfterExternBlock: false
+  BeforeCatch: false
+  BeforeElse: false
+  BeforeLambdaBody: false
+  BeforeWhile: false
+  SplitEmptyFunction: true
+  SplitEmptyRecord: true
+  SplitEmptyNamespace: true
+BreakBeforeBraces: Custom
+BreakConstructorInitializers: AfterColon
+BreakConstructorInitializersBeforeComma: false
+ColumnLimit: 85   # 限制长度
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+ContinuationIndentWidth: 8
+IncludeCategories: 
+  - Regex: '^<.*'
+    Priority: 1
+  - Regex: '^".*'
+    Priority: 2
+  - Regex: '.*'
+    Priority: 3
+IncludeIsMainRegex: '([-_](test|unittest))?$'
+IndentCaseLabels: true
+IndentWidth: 4
+InsertNewlineAtEOF: true
+MacroBlockBegin: ''
+MacroBlockEnd: ''
+MaxEmptyLinesToKeep: 2
+NamespaceIndentation: All
+SpaceAfterCStyleCast: true
+SpaceAfterTemplateKeyword: false
+SpaceBeforeRangeBasedForLoopColon: false
+SpaceInEmptyParentheses: false
+SpacesInAngles: false
+SpacesInConditionalStatement: false
+SpacesInCStyleCastParentheses: false
+SpacesInParentheses: false
+TabWidth: 4
+```
 

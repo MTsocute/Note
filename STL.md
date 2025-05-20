@@ -80,6 +80,7 @@ int add(int a, int b) { return a + b; }
 
 int main() {
     // 使用 std::bind 绑定 add 函数的第一个参数为 10
+    // std::placeholders::_x 占位符，你想传入的数据先留到起
     auto bind_add = std::bind(add, 10, std::placeholders::_1);
 
     // 调用 bind_add，传入第二个参数

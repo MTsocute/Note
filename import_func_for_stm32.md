@@ -22,6 +22,8 @@
 ## 1. 烧录文件的配置内容
 
 > 烧录文件配置：`stlink.cfg`
+>
+> 适用于 `stm32f103c8t6`
 
 ```ruby
 # choose st-link/j-link/dap-link etc.
@@ -770,7 +772,11 @@ void USART_printf(char *format, ...) {
 
 ### 2. 重写  `printf` USART 输出
 
+> 对于 `clion` 可以使用下面的做法，但是如果你使用了 `freeRtos` 那就对 `xTask` 多分配点空间，不然 `print` 输出不出来
+
 ```cpp
+#include <stdio.h>
+
 int __io_putchar(int ch) {
     HAL_UART_Transmit(&huart1, (uint8_t *) &ch, 1, 200);
     return ch;

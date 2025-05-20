@@ -354,6 +354,8 @@ catch (boost::system::system_error& e) {
 
 ### 2. 错误代码
 
+> 大多时候都在使用这个，因为异步的回调函数把状态作为参数传递的
+
 ```cpp
 boost::system::error_code ec;
 sock.connect(ep, ec);		// 主动放到 connect 捕获状态
@@ -751,6 +753,51 @@ ip::tcp::socket s3(s1); // 编译时报错
 > 因为每一个实例都拥有并管理着一个资源（原生套接字本身）
 >
 > 如果我们允许拷贝构造，结果是我们会有两个实例拥有同样的原生套接字；`Boost.Asio` 选择不允许拷贝（如果你想要创建一个备份，请使用共享指针）
+
+## ==7. 伪封包延长对象的生命周期==
+
+> 看如下情况
+
+```cpp
+void Session::Start() {
+    _sock.async_read_some(
+        asio::buffer(_data, MAX_SIZE),
+        // 看这里，我们其实是把 this 在异步函数中把 this 传递出去了
+        [this]<typename T0, typename T1>(T0 && PH1, T1 && PH2) {
+            handle_read(std::forward<T0>(PH1), std::forward<T1>(PH2)); 
+        }
+    );
+}
+```
+
+> 那么这个 `this` 和异步回调实际上是有冲突的，如果我们的 `this` 在 `handle_read` 之前就释放了自己，那么异步再使用就会导致程序的崩溃
+>
+> 为了解决这个方法，我们希望延长 `this` 的声明周期，至少保证说，我们的 `this` 要在 `handle_read` 生命周期内不消亡
+>
+> **所以我们使用 `share_ptr`**，制造一个 `this` 的 `share` 版本传递给 `handle_read`，那么由于 `handle_read `作用域还没有结束，计数不会归 0 所以 this 不会消亡，就保证了，`handle_read `生命周期内 `this` 一直存在
+
+```cpp
+// 处理一下 handle_read 用于接受 share 版本的 this
+void Session::handle_read(boost::system::error_code & error, size_t bytes_transferred, share_ptr<Session> & _self);
+```
+
+```cpp
+// 调整一下 Start
+void Session::Start() {
+    auto _self = share_ptr<Session>(this);		// 创建一个 share 的 this
+    _sock.async_read_some(
+        asio::buffer(_data, MAX_SIZE),
+        // 看这里，我们其实是把 this 在异步函数中把 this 传递出去了
+        [this, _self]<typename T0, typename T1>(T0 && PH1, T1 && PH2) {
+            handle_read(std::forward<T0>(PH1), std::forward<T1>(PH2), _self); 
+        }
+    );
+}
+```
+
+> 虽然看起来我们是用 share 维护了异步函数时候 this 的生命周期，但是还有一个问题，就是 this 的 share 指针都指向了同一个 this，那么其实可能会造成二次析构的，所以我们需要引入 `share_from_this()` 来解决二次析构的问题
+>
+> 因为 `share_from_this()` 创建了一个 `this` 的副本，然后再增加计数，这样子就不用担心二次析构的问题了
 
 # $Ex. 关联拓展$
 

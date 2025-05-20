@@ -875,7 +875,9 @@ target_link_libraries(ChatRoom PRIVATE Qt${QT_VERSION_MAJOR}::Network)
 
 ### 6. 解决 exe 运行出现的窗口问题
 
-​	![image-20250120022524260](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250120022524260.png)
+![image-20250120022524260](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250120022524260.png)
 
 > 对于这个问题，在编译 exe 的时候 加入 Win32 就行
+>
+> 但是会带来一个 bug 就是使用 qt 输出内容到终端这个功能会再 clion 中不可见，但是如果我们真的打包了程序的时候，也确实不需要输出内容到终端了，所以再 release 的时候自己写一个宏定义就好了
 

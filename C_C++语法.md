@@ -164,6 +164,96 @@ const_cast 之后修改值: 20
 通过函数修改 const 参数: 30
 ```
 
+### 1.4 联合体和结构体
+
+![image-20250509131143317](https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20250509131143317.png)
+
+> 使用场景
+
+```c
+#include <stdio.h>
+#include <string.h>
+
+// 定义不同的数据包类型
+typedef enum {
+    TEMPERATURE,
+    LOCATION,
+    STATUS
+} PacketType;
+
+// 温度数据包结构
+typedef struct {
+    float temp_c;
+    int timestamp;
+} TemperaturePacket;
+
+// 位置数据包结构
+typedef struct {
+    float latitude;
+    float longitude;
+    int timestamp;
+} LocationPacket;
+
+// 状态数据包结构
+typedef struct {
+    char status_code[4];
+    int timestamp;
+} StatusPacket;
+
+// 使用union整合所有数据包类型
+typedef union {
+    TemperaturePacket temp;
+    LocationPacket loc;
+    StatusPacket status;
+} DataPacket;
+
+// 完整的网络数据包结构（类型标记 + union数据）
+typedef struct {
+    PacketType type;
+    DataPacket data;
+} NetworkPacket;
+
+// 处理数据包的函数
+void process_packet(NetworkPacket packet) {
+    switch (packet.type) {
+        case TEMPERATURE:
+            printf("温度: %.1f°C, 时间: %d\n",
+                   packet.data.temp.temp_c,
+                   packet.data.temp.timestamp);
+            break;
+        case LOCATION:
+            printf("位置: (%.2f, %.2f), 时间: %d\n",
+                   packet.data.loc.latitude,
+                   packet.data.loc.longitude,
+                   packet.data.loc.timestamp);
+            break;
+        case STATUS:
+            printf("状态码: %s, 时间: %d\n",
+                   packet.data.status.status_code,
+                   packet.data.status.timestamp);
+            break;
+    }
+}
+
+int main() {
+    // 模拟接收温度数据包
+    NetworkPacket temp_packet;
+    temp_packet.type = TEMPERATURE;
+    temp_packet.data.temp = (TemperaturePacket){25.5, 1623456789};
+    process_packet(temp_packet);
+
+    // 模拟接收位置数据包
+    NetworkPacket loc_packet;
+    loc_packet.type = LOCATION;
+    loc_packet.data.loc = (LocationPacket){39.9042, 116.4074, 1623456790};
+    process_packet(loc_packet);
+
+    return 0;
+}
+```
+
+
+
 ### 1.5  位运算
 
 | 运算符 | 中文名称 | 英文名称  | 作用                                                         |
@@ -984,7 +1074,7 @@ BraceWrapping:
 BreakBeforeBraces: Custom
 BreakConstructorInitializers: AfterColon
 BreakConstructorInitializersBeforeComma: false
-ColumnLimit: 85   # 限制长度
+ColumnLimit: 105   # 限制长度
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
 ContinuationIndentWidth: 8
 IncludeCategories: 

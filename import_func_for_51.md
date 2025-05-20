@@ -2,6 +2,8 @@
 
 ---
 
+- [C51 关机下载程序的本质](https://www.bilibili.com/video/BV1AT421Y7DS?spm_id_from=333.788.player.switch&vd_source=b47817c1aa0db593f452034d53d4273a&p=73)
+
 <br>
 
 ## 1. 中断函数和对应的中断执行函数

@@ -650,3 +650,20 @@ First adjacent pair of equal elements found at position: 2
 Element: 3
 ```
 
+## 3. std::partition
+
+> 返回的值是满足条件的位置
+
+```cpp
+std::vector<int> numbers = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+// 对数组进行了划分，让可以被 3 整除的所有数分组并放到了前面
+// numbers = {[0, 3, 6, 9], 1, 2, 4, 5, 7, 8}
+// bound1 -> 指向 1
+auto bound1 = std::partition(numbers.begin(), numbers.end(), [](int v){return v % 3 == 0;});
+
+// 第二次 partition: 把 %3==1 的提到 bound1 到末尾的前面
+// numbers = {[0, 3, 6, 9], [1, 4, 7, 2], 5, 8}
+// bound2 -> 指向 2
+auto bound2 = std::partition(bound1, numbers.end(), [](int v){return v % 3 == 1;});  // 2 --> end
+```
+

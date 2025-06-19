@@ -358,7 +358,13 @@ int main()
 
 ![image-20250120165039147](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250120165039147.png)
 
+## 2. 泛化
 
+---
+
+
+
+<br>
 
 ## 4. 文件操作
 
@@ -613,7 +619,7 @@ int main() {
 }
 ```
 
-### 2. `std::fucntion< T(arg ...) >`
+### 2. `std::fucntion`
 
 > 这个就是 CPP 版本的函数指针
 
@@ -690,7 +696,9 @@ int main() {
 
 - 普通函数的绑定
 
-> 要注意, 这里这个占位符 不是说 10 占据了 1 这个位置, 而是 _1 占据了 b 的位置, 这个 b 等会别人传进来
+> 要注意, 这里这个占位符 不是说 10 占据了 1 这个位置,
+>
+> 而是 _1 占据了 b 的位置, 这个 b 可以用于传入别的参数
 
 ```cpp
 // 使用 std::bind 绑定 add 函数，将第一个参数绑定为 10
@@ -1039,7 +1047,7 @@ target_link_libraries(untitled PRIVATE
 
 
 
-### 8. 常用的代码整理模板
+### 8. `CLangFormat`
 
 ```yaml
 # Generated from CLion C/C++ Code Style settings
@@ -1103,3 +1111,36 @@ SpacesInParentheses: false
 TabWidth: 4
 ```
 
+### 9. MSVC `output` 输出 乱码问题
+
+---
+
+> MSVC 使用了 GBK 编码, 然后大多数的终端都是 UTF-8 然后就会导致输出不正常
+>
+> 所以我们可以再 cmake 配置如下命令解决乱码问题
+
+```cmake
+# CMake的最低版本要求
+cmake_minimum_required(VERSION 3.22)
+
+# 项目名称
+project(MyProject)
+
+# 设置 C++ 标准
+set(CMAKE_CXX_STANDARD 11)
+
+# 判断是否使用 MSVC 编译器
+if (MSVC)
+    # 设置 C 标志为 utf-8
+    set(CMAKE_C_FLAGS /utf-8)
+    # 设置 C++ 标志为 utf-8
+    set(CMAKE_CXX_FLAGS /utf-8)
+    # 启用 Boost 异常处理
+    set(CMAKE_CXX_FLAGS "/EHsc ${CMAKE_CXX_FLAGS}")
+endif ()
+
+# 添加可执行文件
+add_executable(MyProject demo.cpp)
+```
+
+## 

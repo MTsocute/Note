@@ -45,7 +45,7 @@ ${myVar}
 unset(myVar)
 ```
 
-> 如果想要在 Cmake 编译的时候打印，就得这样子
+> 如果想要在 `CMake` 编译的时候打印，就得这样子
 
 ```cmake
 message("myvar = ${myVar}")
@@ -66,7 +66,7 @@ set(ENV{PATH} "$ENV{PATH}:/Path/to/somwhere")
 
 ### 2.3 缓存变量
 
-> 可以在 build 目录下，使用 cmake-gui 打开查看到
+> 可以在 build 目录下，使用 `cmake-gui` 打开查看到
 
 ```cmake
 set(<variable_name> <value> CACHE <type> "<description>" [FORCE])
@@ -188,9 +188,26 @@ add_executable(${PROJECT_NAME} ${SRC_LIST})
 
 ### 4.2 第三方库查找
 
-> [在这个网站可以找到常用的第三方模块的库名](https://cmake.org/cmake/help/latest/manual/cmake-modules.7.html)
+> 这里建议使用 `vcpkg` 包管理器统一管理第三方库，`vcpkg` 安装的第三方库是根据当前使用的编译器来下载库的类型的
 >
-> [参考教程可以看这个文档](https://zhuanlan.zhihu.com/p/97369704)
+> 这里以下面的库为例
+
+![image-20250611092407242](https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20250611092407242.png)
+
+> 我正在使用的编译器是 `mingw` 所以他会根据我的编译器，自动下载 `sdl2:x64-mingw-dynamic`，我们使用 `vcpkg` 配合 `cmake` 的 `find_package` 的大前提是都是 `x64-windows`，因为用的 `MSVC`，他的 `cmake` 命令如下
+
+```shell
+# msvc
+cmake -DCMAKE_TOOLCHAIN_FILE=D:/Develop_Tool/vcpkg/scripts/buildsystems/vcpkg.cmake
+```
+
+> 所以对于 `mingw` 还请添加指定第三方库类型，才可以找到对应的库
+
+```shell
+# mingw32
+cmake -DCMAKE_TOOLCHAIN_FILE=D:/Develop_Tool/vcpkg/scripts/buildsystems/vcpkg.cmake
+-DVCPKG_TARGET_TRIPLET=x64-mingw-dynamic
+```
 
 <br>
 

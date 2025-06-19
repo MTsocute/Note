@@ -6,43 +6,7 @@
 
 <br>
 
-## 1. Win 环境搭建
-
-<br>
-
-### 1. MSVC `output` 输出 乱码问题
-
----
-
-> MSVC 使用了 GBK 编码, 然后大多数的终端都是 UTF-8 然后就会导致输出不正常
->
-> 所以我们可以再 cmake 配置如下命令解决乱码问题
-
-```cmake
-# CMake的最低版本要求
-cmake_minimum_required(VERSION 3.22)
-
-# 项目名称
-project(MyProject)
-
-# 设置 C++ 标准
-set(CMAKE_CXX_STANDARD 11)
-
-# 判断是否使用 MSVC 编译器
-if (MSVC)
-    # 设置 C 标志为 utf-8
-    set(CMAKE_C_FLAGS /utf-8)
-    # 设置 C++ 标志为 utf-8
-    set(CMAKE_CXX_FLAGS /utf-8)
-    # 启用 Boost 异常处理
-    set(CMAKE_CXX_FLAGS "/EHsc ${CMAKE_CXX_FLAGS}")
-endif ()
-
-# 添加可执行文件
-add_executable(MyProject demo.cpp)
-```
-
-## 2. Python 辅助脚本
+## 1. Python 辅助脚本
 
 >Kconfiglib 生成的是 `.config` 文件，并非C语言文件，需要使用脚本生成，将以下代码复制到文件中并命名为`kconfig.py`
 
@@ -107,7 +71,7 @@ if __name__ == "__main__":
     main()
 ```
 
-## 3. 创建 Kconfig
+## 2. 创建 Kconfig
 
 > 新建一个名字为 `Kconfig` 的文件（注意没有后缀名），和上一步中中创建的 `kconfig.py` 的文件放在一起。
 

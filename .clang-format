@@ -1,0 +1,66 @@
+Language: Cpp
+BasedOnStyle: Google  # Google 风格，更现代化、通用
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+AccessModifierOffset: -4
+AlignOperands: true
+AlignTrailingComments: true
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AlignConsecutiveMacros: AcrossEmptyLinesAndComments
+
+AllowShortFunctionsOnASingleLine: Empty # 空函数允许一行写
+AllowShortBlocksOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: true
+
+AlwaysBreakTemplateDeclarations: Yes
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true
+  AfterClass: true
+  AfterStruct: true
+  AfterEnum: true
+  BeforeElse: true
+  BeforeCatch: true
+  SplitEmptyFunction: true
+  SplitEmptyRecord: true
+  SplitEmptyNamespace: true
+
+BreakConstructorInitializers: AfterColon
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+
+ColumnLimit: 100
+ContinuationIndentWidth: 8
+
+IncludeBlocks: Preserve
+IncludeCategories:
+  - Regex: '^<.*'
+    Priority: 1
+    SortPriority: 0
+    CaseSensitive: false
+  - Regex: '^"protobuf/.*'
+    Priority: 2
+  - Regex: '^"boost/.*'
+    Priority: 3
+  - Regex: '^".*'
+    Priority: 4
+  - Regex: '.*'
+    Priority: 5
+IncludeIsMainRegex: '([-_](test|unittest))?$'
+SortIncludes: CaseInsensitive
+
+IndentCaseLabels: true
+NamespaceIndentation: All
+
+SpacesInParentheses: false
+SpaceAfterCStyleCast: true
+SpacesInConditionalStatement: false
+SpaceBeforeRangeBasedForLoopColon: true
+SpacesInAngles: false
+SpaceAfterTemplateKeyword: true
+
+InsertNewlineAtEOF: true
+MaxEmptyLinesToKeep: 1

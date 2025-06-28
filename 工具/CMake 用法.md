@@ -103,6 +103,16 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 endif()
 ```
 
+
+> 常见的有
+
+| 变量名                     | 说明                                            |
+| -------------------------- | ----------------------------------------------- |
+| `CMAKE_SOURCE_DIR`         | 顶层 CMakeLists.txt 所在目录的绝对路径          |
+| `CMAKE_BINARY_DIR`         | 顶层构建目录的绝对路径（通常是 `build` 文件夹） |
+| `CMAKE_CURRENT_SOURCE_DIR` | 当前 CMakeLists.txt 所在目录的绝对路径          |
+| `CMAKE_CURRENT_BINARY_DIR` | 当前目录的构建目录的绝对路径                    |
+
 <br>
 
 ### 2.5 option 变量

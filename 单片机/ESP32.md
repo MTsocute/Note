@@ -744,21 +744,51 @@ void uart_init()
 
 ### 1. ESP FLASH 分区表
 
+> 这章开始之前，我们先对单片的存储空间构成有一个概念，单片机的存储空间主要有两个部分构成 `RAM` + `FLASH`
+>
+> `RAM`：主要就是程序运行的时候的存储空间
+>
+> `FLASH`：存储程序的空间
+
+```shell
+Flash（程序/资源存储）
+├── bootloader
+├── partition table
+├── app（代码）
+├── phy_init
+├── spiffs / fatfs
+└── nvs
+
+RAM（运行时内存）
+├── IRAM（重要函数）
+├── DRAM（变量/堆栈）
+├── 堆（malloc 分配）
+└── PSRAM（大内存缓存）
+```
+
+> 其中不同分区的作用如下：
+
+| 分区名称        | 用途                                                     | 大小                 |
+| :-------------- | -------------------------------------------------------- | -------------------- |
+| bootloader      | 启动程序                                                 | 约 32 KB             |
+| partition table | 告诉系统怎么划分 Flash 空间                              | 约 4 KB              |
+| nvs             | 永久配置参数存储（如 WiFi 密码）                         | 通常几十 KB          |
+| phy_init        | PHY 校准数据                                             | 很小同上             |
+| factory         | 指 **出厂程序分区**，固件烧录后默认运行，不参与 OTA 机制 | 1 MB                 |
+| spiffs/fatfs    | 文件系统（网页、图片等资源）                             | 自定义（原本不存在） |
+| free space      | 可自定义其他分区                                         | —                    |
+
 ![image-20250322140740470](https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20250322140740470.png)
 
-### 2. NVS
+<br>
 
-![image-20250321203700210](https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20250321203700210.png)
+### 2. Little Fs
 
-### 3. Little Fs
-
-> [参考视频](https://www.youtube.com/watch?v=V9-cgXag4Ko)
+> [!important]
 >
-> [分区表](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32/api-guides/partition-tables.html)
+> 其中我们的 `spiffs（SPI FLASH FILE SYSTEM 轻量级文件系统）` 可以认为是我们电脑 C 盘一样的概念，可以自己存文件那种自己操作的空间
 >
-> `spiffs`: SPI FLASH FILE SYSTEM 轻量级文件系统 
->
-> Little Fs 的本质作用就是把一些文件存储到我们的单片机 Flash 中, 然后断电也还是不会消失
+> 而我们 `Little Fs` 的作用呢，就是和我们标准库一样，用 `File` 这些来控制这个磁盘
 
 ![](https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20250321200811698.png)
 

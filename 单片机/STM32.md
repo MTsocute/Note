@@ -114,15 +114,7 @@ include_dir = ./Core/Inc
 src_dir = ./Core/Src
 ```
 
-### 3. 如何启用 CPP 
-
-> 创建的虽然说可以编译 CPP 文件，但是会找不到 CPP 文件的库文件位置导致没有智能提示，所以创建一个 CPP 配置，激活库文件就行，反正编译啥的也不会用到
->
-> 涉及到需要操作系统的库是不可以使用的，所以这个就是纯粹的更好用CPP的性质和拥有的数据结构
-
-![image-20250120004025799](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250120004025799.png)
-
-## 5.GPIO 脚针的 PIN 口的定义
+## 3.GPIO 脚针的 PIN 口的定义
 
 ```cpp
 // 0000 0000 0000 0001

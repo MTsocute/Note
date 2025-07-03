@@ -18,6 +18,8 @@
 
 <br>
 
+---
+
 ## 2. git 回溯到某个版本
 
 ```bash
@@ -45,3 +47,43 @@ dcfc1a5 理解 HandleRead 的机制，并添加了对应的注释
 | 场景 2 | 回退到旧版本，**修改当前分支指向**（保留历史） | `git reset --soft/hard <commit>`              |
 | 场景 3 | 回退并提交（**让版本历史看起来像没发生过**）   | `git reset --hard <commit>`，再 `git push -f` |
 | 场景 4 | 创建一个分支来保留旧代码                       | `git checkout -b backup <commit>`             |
+
+<br>
+
+---
+
+## 3. git 使用 ssh 管理 remote 仓库
+
+> 检查本地的 ssh 是否和 github 端验证
+
+```shell
+ssh -T git@github.com
+```
+
+> [!warning]
+>
+> 出现了如下内容说明你的 ssh token 是绑定完成了的，不然的话[看看这篇文章](https://blog.csdn.net/weixin_42310154/article/details/118340458)
+
+```txt
+Hi MTsocute! You've successfully authenticated, but GitHub does not provide shell access.
+```
+
+> 切换我们的登录验证方式为 `ssh` 不然的话默认是 `http` 但是这个方法早就被 ban 了，没法 http 控制仓库
+>
+> 我们先看看当前是哪种方式
+
+```shell
+git remote -v
+```
+
+```shell
+origin	https://github.com/MTsocute/Go_Blog.git (fetch)
+origin	https://github.com/MTsocute/Go_Blog.git (push)
+```
+
+> 果然是 http, 那么我们用下面的命令切换到 ssh
+
+```shell
+git remote set-url origin git@github.com:MTsocute/Go_Blog.git
+```
+

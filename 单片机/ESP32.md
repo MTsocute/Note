@@ -1152,3 +1152,17 @@ ESP32-S3 - N16R8
 
 > 在带有 OSPI PSRAM（即内置芯片为 ESP32-S3-N`?`R8）的模组中，管脚 IO35、IO36、IO37 用于连接至模组内部集成的 OSPI PSRAM，不可用于其他功能。
 
+## 7. `Arduino` 使用高版本 C++ 特性的方法
+
+> 使用 pio 下载的 pioArduino 使用的 cpp 版本一般都不会很高，为了使用 CPP 20/23 的特性，我们可以使用下面这个库
+
+```ini
+[env:esp32-s3-devkitc-1]
+framework = arduinos
+board = esp32-s3-devkitc-1
+platform = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip
+
+build_flags = -std=gnu++2b
+build_unflags = -std=gnu++11
+```
+

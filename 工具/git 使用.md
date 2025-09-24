@@ -108,3 +108,53 @@ git remote set-url origin git@github.com:MTsocute/Go_Blog.git
 | 检出标签             | `git checkout v1.0.0`                              | 切换到标签对应的提交（detached HEAD） |
 | 基于标签建分支       | `git checkout -b release-1.0 v1.0.0`               | 从标签创建新分支                      |
 | 创建签名标签         | `git tag -s v1.0.0 -m "Signed release"`            | 使用 GPG 签名标签                     |
+
+<br>
+
+---
+
+## 远程仓库操作
+
+| 功能                       | 命令                                             | 说明                                     |
+| -------------------------- | ------------------------------------------------ | ---------------------------------------- |
+| 查看远程仓库               | `git remote -v`                                  | 列出所有远程简写名及对应的 URL           |
+| 添加远程仓库               | `git remote add <name> <url>`                    | 常用 `origin` 作为 `<name>`              |
+| 删除远程仓库               | `git remote remove <name>` 或 `git remote rm <name>` | 删除指定的远程仓库                       |
+| 重命名远程仓库             | `git remote rename <old> <new>`                  | 将远程简写名 `<old>` 改为 `<new>`        |
+| 修改远程仓库 URL           | `git remote set-url <name> <newurl>`             | 更新 fetch 和 push 的 URL               |
+| 查看远程仓库详细信息       | `git remote show <name>`                         | 包括分支追踪、URL、推拉状态              |
+| 获取远程更新               | `git fetch <name>`                               | 同步远程分支最新提交，不自动合并         |
+| 删除远程已删除的分支引用   | `git remote prune <name>`                        | 清理本地对已经删除的远程分支的无效引用   |
+| 克隆远程仓库               | `git clone <url> [目录]`                         | 下载远程仓库到本地，新建目录可选         |
+| 推送分支并设置上游         | `git push -u <name> <branch>`                    | 后续 `git push` 可省略远程名和分支名     |
+| 推送所有本地分支           | `git push --all <name>`                          | 一次性推送所有本地分支到指定远程         |
+| 拉取并合并远程分支         | `git pull <name> <branch>`                       | 等同 `git fetch` + `git merge`           |
+| 拉取并重基                 | `git pull --rebase <name> <branch>`              | 等同 `git fetch` + `git rebase`          |
+
+### 如何将本地仓库推送至 GitHub 远程仓库
+
+1. 在本地项目根目录初始化 Git（若已初始化，可跳过）：
+	```bash
+	git init
+	```
+2. 在 GitHub 上创建新仓库，不勾选初始化选项，复制仓库地址（HTTPS 或 SSH）。
+3. 添加远程仓库地址：
+	```bash
+	git remote add origin <仓库地址>
+	```
+4. 将主分支重命名为 main（若已是 main 可跳过）：
+	```bash
+	git branch -M main
+	```
+5. 首次推送并设置上游：
+	```bash
+	git add .
+	git commit -m "首次提交"
+	git push -u origin main
+	```
+6. 后续更新时，执行：
+	```bash
+	git add .
+	git commit -m "更新说明"
+	git push
+	```

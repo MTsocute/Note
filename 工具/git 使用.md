@@ -4,7 +4,7 @@
 
 <br>
 
-## 1. 关于分支
+## 关于分支
 
 | 操作             | 命令                                               |
 | ---------------- | :------------------------------------------------- |
@@ -20,7 +20,7 @@
 
 ---
 
-## 2. git 回溯到某个版本
+## git 回溯到某个版本
 
 ```bash
 git log --oneline
@@ -52,7 +52,7 @@ dcfc1a5 理解 HandleRead 的机制，并添加了对应的注释
 
 ---
 
-## 3. git 使用 ssh 管理 remote 仓库
+##  git 使用 ssh 管理 remote 仓库
 
 > 检查本地的 ssh 是否和 github 端验证
 
@@ -87,3 +87,24 @@ origin	https://github.com/MTsocute/Go_Blog.git (push)
 git remote set-url origin git@github.com:MTsocute/Go_Blog.git
 ```
 
+<br>
+
+## 上传打包的文件并标定 Tag
+
+---
+
+| 功能                 | 命令                                               | 说明                                  |
+| -------------------- | -------------------------------------------------- | ------------------------------------- |
+| 查看所有标签         | `git tag`                                          | 列出所有标签                          |
+| 模糊搜索标签         | `git tag -l "v1.*"`                                | 按模式筛选标签                        |
+| 创建轻量标签         | `git tag v1.0.0`                                   | 简单打标签，不含说明                  |
+| 创建附注标签         | `git tag -a v1.0.0 -m "Release v1.0.0"`            | 推荐方式，包含作者/日期/说明          |
+| 给历史 commit 打标签 | `git tag -a v0.9.0 <commit-hash> -m "Old release"` | 给指定提交加标签                      |
+| 查看标签详情         | `git show v1.0.0`                                  | 查看标签对应的提交和说明              |
+| 删除本地标签         | `git tag -d v1.0.0`                                | 删除本地标签                          |
+| 删除远程标签         | `git push origin --delete v1.0.0`                  | 删除远程仓库标签                      |
+| 推送单个标签         | `git push origin v1.0.0`                           | 把某个标签推送到远程                  |
+| 推送所有标签         | `git push origin --tags`                           | 把所有本地标签推送到远程              |
+| 检出标签             | `git checkout v1.0.0`                              | 切换到标签对应的提交（detached HEAD） |
+| 基于标签建分支       | `git checkout -b release-1.0 v1.0.0`               | 从标签创建新分支                      |
+| 创建签名标签         | `git tag -s v1.0.0 -m "Signed release"`            | 使用 GPG 签名标签                     |

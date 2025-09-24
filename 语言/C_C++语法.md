@@ -285,7 +285,7 @@ void error_handling(char *message) {
 }
 ```
 
-### 1.7 错误的一般处理
+### 1.7 错误处理
 
 ```cpp
 void Client::open_chat_box() {
@@ -373,9 +373,81 @@ private:
 
 ```
 
+### 1.10 `volatile`
+
+> `volatile` 关键字用于指示编译器，变量的值可能在程序外部被修改，因此编译器不应对其进行优化，每次访问都需要从内存中重新读取。主要用于以下情况：
+
+- 在中断服务程序中修改的变量，可能被主程序或其他中断程序访问，为了保证主程序或其他中断程序能够读取到最新的值，需要使用 `volatile` 声明。
+
+```c
+#include <stdio.h>
+#include <stdbool.h>
+
+volatile bool flag = false;  // 如果去掉 volatile 会怎样？
+
+// 模拟中断：1 秒后触发
+void simulate_interrupt() {
+    sleep(1);  // 模拟延迟
+    flag = true;  // 设置标志位
+    printf("Interrupt: flag set to true\n");
+}
+
+int main() {
+    pthread_t tid;
+    pthread_create(&tid, NULL, (void*)simulate_interrupt, NULL);
+
+    printf("Main: waiting for flag...\n");
+
+    // 主循环等待 flag 改变
+    while (!flag) {
+        // doing nothing
+    }
+
+    printf("Main: flag is true, exiting\n");
+    return 0;
+}
+```
+
+> [!note]
+>
+> `volatile` 关键字主要用于解决变量的可见性和编译器优化带来的问题，确保程序能够正确地访问和修改那些可能被外部因素改变的变量
+
+<br>
+
 ## 2. 泛化
 
 ---
+
+### 1. C 泛型实现案例
+
+> `##` 是字符填充，`T` 对于`函数名`必须要用这个才能替换
+
+```c
+// 这段宏的作用是 为某个具体类型 T 生成一个 max_T 函数。
+#define MAX(T)          \
+static inline T max_##T(T a, T b) { return (a > b) ? a : b; }
+
+MAX(int)       /* 生成 max_int 函数 */
+MAX(double)    /* 生成 max_double 函数 */
+
+/* 统一入口，编译期选路 */
+#define max(x, y) _Generic((x),               \
+              int:    max_int,                \
+              double: max_double              \
+          )(x, y)
+
+int main(void)
+{
+    int    a = max(3, 7);
+    double b = max(3.14, 2.71);
+}
+```
+
+> C11 新增的 `_Generic` 关键字，它是一个 **编译期类型分发工具**，也就是说：**它根据传入参数的类型，在编译时选择一个对应的表达式**。
+
+```c
+int a = max(3, 7);	// 会根据第一个参数 3 的类型，去使用对应的函数，因为是 int 所以取用了 max_int 函数
+```
 
 
 

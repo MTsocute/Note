@@ -149,10 +149,97 @@ except requests.Timeout:
 
 <br>
 
+## 4. 类
+
+---
+
+### 1. 子类必须赋予父类的写法（纯虚）
+
+```python
+class Base:
+    def __init__(self):
+        # 子类必须在 super().__init__() 之前给 self.x 赋值
+        if getattr(self, 'x', None) is None:
+            raise ValueError('子类必须给 x 赋值')
+        # 其他初始化 …
+
+class Child(Base):
+    def __init__(self):
+        self.x = 42          # 如果这行漏掉，父类会抛错
+        super().__init__()
+```
+
+> 第二种写法更加 python 一点
+
+```python
+from abc import ABC, abstractmethod
+
+class Base(ABC):
+    @property
+    @abstractmethod
+    def x(self):
+        """子类必须实现同名属性或同名方法并返回非 None 值"""
+        ...
+
+class Child(Base):
+    def __init__(self):
+        self._x = 42   # 漏掉这一行会在实例化时抛 TypeError
+
+    @property
+    def x(self):
+        return self._x
+```
+
+### 5. 修饰器
+
+---
+
+### 1. @property
+
+> [!note]
+>
+> - `@property` 把**一个方法伪装成属性**，外部可以像读写普通属性那样读写它，而背后却运行你写的函数。
+> - `@xxx.setter` 把方法变成可写属性
+>
+> 其实这个部分就是简化了传统意义的 `getter` 和 `setter`
+
+```python
+class Circle:
+    def __init__(self, radius):
+        self._radius = radius
+
+    @property           # 读
+    def radius(self):
+        return self._radius
+
+    @radius.setter      # 写
+    def radius(self, value):
+        if value < 0:
+            raise ValueError("半径不能为负")
+        self._radius = value
+
+    @property           # 只读派生属性
+    def area(self):
+        return 3.1416 * self._radius ** 2
+```
+
+> 外部直接当成员变量一样来访问
+
+```python
+c = Circle(5)
+print(c.radius)   # 5          （自动调用 getter）
+print(c.area)     # 78.54      （只读）
+c.radius = -1     # ValueError （自动调用 setter 并校验）
+```
+
+<br>
+
 ## Ex. 其他配置
 
 ---
 
-### 1. 统一的管理方法
+### 1. uv 管理 python 环境
 
 > [解决 Python 烦人的环境管理分裂问题](https://www.youtube.com/watch?v=aVXs8lb7i9U)
+
+<br>

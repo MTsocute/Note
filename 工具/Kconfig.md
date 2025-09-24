@@ -12,63 +12,103 @@
 
 ```py
 import os
-import re
 import sys
-import textwrap
+import logging
+from kconfiglib import Kconfig, KconfigError
 
-from kconfiglib import Kconfig, split_expr, expr_value, expr_str, BOOL, \
-                       TRISTATE, TRI_TO_STR, AND, OR
+# 配置日志
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(levelname)s: %(message)s',
+    handlers=[logging.StreamHandler(sys.stderr)]
+)
+logger = logging.getLogger(__name__)
 
-def generate_config(kconfig_file,config_in, config_out, header_out):
+def generate_config(kconfig_file, config_in, config_out, header_out):
+    try:
+        logger.info(f"Parsing Kconfig from: {kconfig_file}")
+        kconf = Kconfig(
+            kconfig_file,
+            warn_to_stderr=False,
+            suppress_traceback=True
+        )
 
-    print("Parsing " + kconfig_file)
-    kconf = Kconfig(kconfig_file, warn_to_stderr=False, 
-                    suppress_traceback=True)
+        # 加载配置文件
+        logger.info(f"Loading config from: {config_in}")
+        if not os.path.exists(config_in):
+            logger.warning(f"Config file not found: {config_in}. Using default settings")
 
-    # Load config files
-    print(kconf.load_config(config_in))
+        kconf.load_config(config_in)
 
-    # Write merged config        
-    print(kconf.write_config(config_out))
+        # 写入合并后的配置
+        logger.info(f"Writing merged config to: {config_out}")
+        kconf.write_config(config_out)
 
-    # Write headers
-    print(kconf.write_autoconf(header_out))
+        # 写入头文件
+        logger.info(f"Generating header file: {header_out}")
+        kconf.write_autoconf(header_out)
 
-    with open(header_out, 'r+') as header_file:
+        # 处理头文件格式
+        try:
+            with open(header_out, 'r+') as header_file:
+                content = header_file.read()
 
-        content = header_file.read()
-        header_file.truncate(0)
-        header_file.seek(0)
+                # 处理CONFIG_前缀
+                content = content.replace("#define CONFIG_", "#define ")
 
-        # Remove CONFIG_ and MR_USING_XXX following number
-        content = content.replace("#define CONFIG_", "#define ")
+                # 重新写入带保护宏的内容
+                header_file.seek(0)
+                header_file.truncate()
 
-        # Add the micro
-        header_file.write("#ifndef _CONFIG_H_\n") 
-        header_file.write("#define _CONFIG_H_\n\n")
+                header_content = [
+                    "#ifndef _CONFIG_H_",
+                    "#define _CONFIG_H_\n",
+                    "#ifdef __cplusplus",
+                    'extern "C" {',
+                    "#endif /* __cplusplus */\n\n",
+                    content,
+                    "\n#ifdef __cplusplus",
+                    "}",
+                    "#endif /* __cplusplus */\n\n",
+                    "#endif /* _CONFIG_H_*/"
+                ]
 
-        header_file.write("#ifdef __cplusplus\n")
-        header_file.write("extern \"C\" {\n") 
-        header_file.write("#endif /* __cplusplus */\n\n")
+                header_file.write("\n".join(header_content))
 
-        # Write back the original data
-        header_file.write(content)
+            logger.info(f"Header file processed successfully")
 
-        # Add the micro
-        header_file.write("\n#ifdef __cplusplus\n")
-        header_file.write("}\n")
-        header_file.write("#endif /* __cplusplus */\n\n")
-        header_file.write("#endif /* _CONFIG_H_*/\n")
+        except IOError as e:
+            logger.error(f"Failed to process header file: {str(e)}")
+            sys.exit(1)
+
+    except KconfigError as e:
+        logger.error(f"Kconfig processing failed: {str(e)}")
+        sys.exit(1)
+    except Exception as e:
+        logger.exception(f"Unexpected error during config generation")
+        sys.exit(1)
 
 def main():
-    kconfig_file = 'Kconfig' 
-    config_in = '.config'
-    config_out = '.config'
-    header_out = 'config.h'
+    # 使用更安全的路径处理
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    kconfig_file = os.path.join(script_dir, 'Kconfig')
+    config_in = os.path.join(script_dir, '.config')
+    config_out = os.path.join(script_dir, '.config')
+    header_out = os.path.join(script_dir, 'config.h')
+
     generate_config(kconfig_file, config_in, config_out, header_out)
+    logger.info("Configuration generation completed successfully")
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+        sys.exit(0)
+    except SystemExit as e:
+        # 已经处理过的退出
+        raise
+    except Exception as e:
+        logger.exception("Unhandled exception in main")
+        sys.exit(1)
 ```
 
 ## 2. 创建 Kconfig
@@ -106,4 +146,3 @@ Loaded configuration '.config'
 No change to configuration in '.config'
 Kconfig header saved to 'config.h'
 ```
-

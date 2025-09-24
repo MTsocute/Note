@@ -2,7 +2,7 @@
 
 ---
 
-## 1. 构建一个静态库的项目
+## 1. 模块作为库导入主程序
 
 > 注意，我们可以先创建，后续在添加内容的
 
@@ -23,6 +23,43 @@ target_sources(complex PRIVATE complex.cpp complex.h)
 # 链接库
 target_link_libraries(demo PRIVATE complex)
 ```
+
+```shell
+project_root/
+├── CMakeLists.txt        ← 主 CMake（你贴的那个）
+├── src/
+│   └── main.c
+├── my_module/            ← 你想加入的模块
+│   ├── inc/
+│   │   └── foo.h
+│   └── src/
+│       └── foo.c
+```
+
+> #### my_module/CMakeLists.txt
+
+```cmake
+add_library(my_module static/interface
+    src/foo.c
+)
+
+target_include_directories(my_module PUBLIC inc)
+```
+
+> #### 主 CMakeLists.txt：
+
+```cmake
+# 添加子目录（会自动包含 my_module 的 CMake）
+add_subdirectory(my_module)
+
+# 编译主程序，并链接模块
+ADD_EXECUTABLE(${CMAKE_PROJECT_NAME}.elf # 或者 (${CMAKE_PROJECT_NAME})
+    ${PROJECT_SOURCES}
+    $<TARGET_OBJECTS:my_module>  # 把模块的 object 文件加进来
+)
+```
+
+<br>
 
 ## 2. 变量
 
@@ -248,4 +285,3 @@ include_directories("${PROJECT_BINARY_DIR}")
 # add the executable
 add_executable(Tutorial tutorial.cxx)
 ````
-

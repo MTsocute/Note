@@ -6,7 +6,7 @@
 
 1. 实现某功能如何配置 GPIO 
 2. 实现所需功能使用对应的 HAL 的库
-3. 实现这个功能所需要的基本原理，主要是为了告诉参数是对应什么，不会太深入
+3.  [单片机]() 实现这个功能所需要的基本原理，主要是为了告诉参数是对应什么，不会太深入
 
 - 参考资料
 
@@ -40,7 +40,7 @@ adapter speed 10000
 
 ![2-1 工程模板](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/2-1%20%E5%B7%A5%E7%A8%8B%E6%A8%A1%E6%9D%BF.jpg)
 
-## ==3. 基本 GIPO Pin 参数的介绍==
+## 3. 基本 GIPO Pin 参数的介绍
 
 > 这段代码是STM32中使用HAL库配置GPIO（通用输入输出）引脚的例子
 >
@@ -59,7 +59,7 @@ adapter speed 10000
 >
 > - Speed：设置GPIO引脚的输出速度（即信号的切换速率）。
 >     - `GPIO_SPEED_FREQ_LOW`表示低速模式，适用于不需要频繁变化的信号。
->     - 其他常见选项：
+>     - /其他常见选项：
 >         - `GPIO_SPEED_FREQ_MEDIUM`: 中速模式
 >         - `GPIO_SPEED_FREQ_HIGH`: 高速模式（适用于需要快速切换的信号，如高速通信）
 >
@@ -416,7 +416,7 @@ uint8_t getButton(void) {
 
 <br>
 
-## 2.2 中断
+## 2.2 定时器
 
 ---
 
@@ -475,7 +475,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 ![image-20241213172804137](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241213172804137.png)
 
-### ==4. `EXIT` 外部中断 和 `TIM` 外部时钟的区别==
+### 4. EXIT 外部中断 和 TIM 外部时钟的区别
 
 > **EXTI：** 按键检测，按下触发中断。
 >
@@ -489,7 +489,58 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 | 是否计数 |     不计数，只响应事件     |    可计数，基于外部信号驱动    |
 |  优缺点  |   响应快，适合一次性事件   |  配置复杂，适合周期性信号处理  |
 
+#### 1. 使用 HAL 复现一个 Arduino 的 `pulseIn(pin, level, timeout)`
+
+> - 我们设置 PSC = 72，然后 ARR 设最大
+>- 那么我们 ARR 完成一次 + 1 的时间就是 1 us
+> - 然后我们就利用`htim6`记录了多少数，来判断从开始计数到停止开销的时间
+
+```c
+extern TIM_HandleTypeDef htim6;
+// 获取定时器当前的记数
+static uint16_t micros(void) { return __HAL_TIM_GET_COUNTER(&htim6); }
+
+static void delay_us(uint16_t us){
+    uint16_t t0 = micros();
+    while ((uint16_t)(micros() - t0) < us) ;
+}
+
+/**
+ * @brief  等待并测量指定引脚出现某电平的持续时间
+ *
+ * 1. 先等到引脚电平 == level（超时直接返回 0）
+ * 2. 再测量该电平保持多久，直到电平翻转或超时
+ *
+ * @param port_type  GPIO 端口（如 GPIOA）
+ * @param pin        引脚号（如 GPIO_PIN_0）
+ * @param level      要等待的电平：HAL_GPIO_SET | RESET
+ * @param timeout_us 最大等待时间（微秒）
+ *
+ * @retval 0          超时
+ * @retval > 0        指定电平实际持续的时间（微秒）
+ */
+static uint16_t pulseIn(GPIO_TypeDef *port_type, uint16_t pin, uint8_t level, uint16_t timeout_us)
+{
+    uint16_t t0;
+
+    /* 等待与 level 相同的电平出现（或超时） */
+    t0 = micros();
+    while (HAL_GPIO_ReadPin(port_type, pin) != level) {
+        if ((uint16_t)((micros() - t0) > timeout_us)) return 0;
+    }
+
+    /* 测量该电平持续的时间（或超时） */
+    t0 = micros();
+    while (HAL_GPIO_ReadPin(port_type, pin) == level) {
+        if ((uint16_t)((micros() - t0) > timeout_us)) return 0;
+    }
+
+    return micros() - t0;
+}
+```
+
 <br>
+
 ### 5. PWM 
 
 > 我们在 `1.基础配置` 的 `11.PWM 配置` 中又说，我们可以把占空比的设置交给代码中实现，我们可以手动要设置
@@ -519,7 +570,7 @@ while {
 
 > 顺便说一下为什么要延迟 `10 ms` 就是我们完成一个高低变换的周期是 1ms，如果你按照我的配置，这个灯的变换的整个过程 100 也才 `100 ms`，所以变化是非常快的，有延迟的的话，每一次改变占空比的结果至让你看个 `10 ms`，就不会太快
 
-#### 5.1 引脚重分配表
+<br>
 
 > 实现下面四种定时器（或者别的功能）的GPIO重分配
 >
@@ -531,6 +582,8 @@ while {
 
 ![image-20241215215859532](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241215215859532.png)
 
+> [!warning]
+>
 > 你可以在这个启用部分通过 `Channel` 来改变
 
 ```cpp
@@ -945,6 +998,16 @@ int __io_putchar(int ch) {
 
 <br>
 
+## 3.3 程序下载电路
+
+---
+
+- [实现程序一键下载](https://www.bilibili.com/video/BV1TZ4y1h7S5/?spm_id_from=333.337.search-card.all.click&vd_source=b47817c1aa0db593f452034d53d4273a)
+
+![image-20250731140824577](https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20250731140824577.png)
+
+<br>
+
 ## 3.5  GIPO 开漏和推挽模式的区别
 
 > 在推挽模式下面，我们的高低电平都有驱动能力
@@ -1027,6 +1090,30 @@ int __io_putchar(int ch) {
 > 这里也 call back 了为什么外设寄存器不自增，内部需要自增
 
 ![image-20241229202423317](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241229202423317.png)
+
+### 6. ADC的分辨率
+
+> [!note]
+>
+> 在ADC（模数转换器）中，分辨率是用来权衡模拟数据的数字数据。这个数字数据的大小由ADC的**位数（bit depth）**决定，计算公式是：
+
+$$
+分辨率=2^{ADC 位数} - 1
+$$
+
+- 如果是**8位ADC**，分辨率 = 28−1=255
+- 如果是**10位ADC**，分辨率 = 210−1=1023
+- 如果是**12位ADC**，分辨率 = 212−1=4095
+
+> 我们用一个程序案例来说明：假定我们的程序是 10 位的 ADC，输入电压最大 5V，那么换算电压的时候，就要这么做
+
+```cpp
+ float volts =  analogRead(TEMT6000) * 5 / 1024.0; // Convert reading to VOLTS
+```
+
+- 这个在电池用电压恒定点量的时候，也不失为一种方案
+
+<br>
 
 ## 3.8 DMA
 

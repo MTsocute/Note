@@ -9,7 +9,7 @@
   4. [pio io monitor ini 文件配置参数](https://docs.platformio.org/en/latest/projectconf/sections/env/options/monitor/index.html)
   5. [U8G2 库视频介绍](https://www.bilibili.com/video/BV1RM4y1a7J5?spm_id_from=333.788.videopod.episodes&vd_source=b47817c1aa0db593f452034d53d4273a&p=20)
   6. [板载 RGB 驱动](https://www.bilibili.com/video/BV1bU4y1u7WG/?spm_id_from=333.337.search-card.all.click&vd_source=b47817c1aa0db593f452034d53d4273a)
-  7. [ILI9488驱动 TFT 触摸屏](http://www.lcdwiki.com/zh/3.5inch_SPI_Module_ILI9488_SKU:MSP3520)
+  7. [ILI9488 驱动 TFT 触摸屏](http://www.lcdwiki.com/zh/3.5inch_SPI_Module_ILI9488_SKU:MSP3520)
   8. [LittleFS](https://www.youtube.com/watch?v=V9-cgXag4Ko)
 
 <br>
@@ -24,9 +24,22 @@
 
 <img src="https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250208181633518.png" alt="image-20250208181633518" style="zoom:77%;" />
 
+> 或者命令行直接创建这个针对 esp32-n16r8
+
+```shell
+platformio project init \
+  --board esp32-s3-devkitc-1 \
+  --project-option="framework=arduino" \
+  --project-option="board_upload.flash_size=16MB" \
+  --project-option="board_build.esp32_psram=enabled" \
+  --project-option="board_build.esp32_psram_size=8MB"
+```
+
+
+
 ### 2. 引脚配置
 
-![果云esp32-s3-引脚图](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/%E6%9E%9C%E4%BA%91esp32-s3-%E5%BC%95%E8%84%9A%E5%9B%BE.jpg)
+![果云 esp32-s3-引脚图](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/%E6%9E%9C%E4%BA%91esp32-s3-%E5%BC%95%E8%84%9A%E5%9B%BE.jpg)
 
 ### 3. 上拉和下拉
 
@@ -61,11 +74,11 @@ monitor_filters = time, default, colorize
 
 ![image-20250211222531993](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250211222531993.png)
 
-> 进入库中,然后配置 ini 文件,下载第三方库
+> 进入库中, 然后配置 ini 文件, 下载第三方库
 
 ![image-20250211222852534](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250211222852534.png)
 
-> 下载结束后,文件就在这个目录下
+> 下载结束后, 文件就在这个目录下
 
 ![image-20250211223014884](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250211223014884.png)
 
@@ -157,7 +170,7 @@ void ledcWrite(
 );
 ```
 - **功能**：设置指定 PWM 通道的占空比（输出电平的持续时间比例）。
-- **示例**：8位分辨率下，`duty=127` 表示 50% 占空比。
+- **示例**：8 位分辨率下，`duty=127` 表示 50% 占空比。
 
 
 
@@ -199,7 +212,7 @@ uint32_t ledcWriteNote(
 uint32_t ledcRead(uint8_t channel);  // PWM 通道号
 ```
 - **功能**：读取指定通道当前的占空比值。
-- **返回值**：当前占空比（如 8位分辨率返回 0~255）。
+- **返回值**：当前占空比（如 8 位分辨率返回 0~255）。
 
 
 
@@ -282,9 +295,9 @@ void loop() {
 
 ### 8. 板载 RGB 灯控制
 
-> 注:高位先发，按照 GRB的顺序发送数据
+> 注: 高位先发，按照 GRB 的顺序发送数据
 >
-> 推荐的[库](https://github.com/adafruit/Adafruit_NeoPixel):`Adafruit_NeoPixel`
+> 推荐的 [库](https://github.com/adafruit/Adafruit_NeoPixel): `Adafruit_NeoPixel`
 
 ![image-20250212142639852](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250212142639852.png)
 
@@ -367,7 +380,7 @@ void loop() {
 
 > 在 `Arduino` 中使用 I2C 需要下载第三方代码 `Liquidcrystal I2C`
 >
-> 对于如何下载第三方库,可以看前面的基础部分
+> 对于如何下载第三方库, 可以看前面的基础部分
 
 ### 1. LCD 显示屏
 
@@ -391,7 +404,7 @@ void loop() {
 
 > 使用 `u8g2` 库
 >
-> 这个库,需要在 main.cpp 文件中提前的导入需要的库文件,不然的话编译都过不了
+> 这个库, 需要在 main.cpp 文件中提前的导入需要的库文件, 不然的话编译都过不了
 
 ```cpp
 #include <SPI.h>
@@ -408,7 +421,7 @@ void loop() {
 
 ![image-20250212002729265](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250212002729265.png)
 
-> 这种比较高级, 带触摸的,然后华友 LED 是屏幕背光
+> 这种比较高级, 带触摸的, 然后华友 LED 是屏幕背光
 
 ![MSP3520-007](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/MSP3520-007.jpg)
 
@@ -420,7 +433,7 @@ void loop() {
 
 ![image-20250213131741183](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250213131741183.png)
 
-> 在 UserSetup.c 文件中, 选择**驱动芯片**和**配置引脚**这两项之后就可以了
+> 在 UserSetup.c 文件中, 选择 **驱动芯片** 和 **配置引脚** 这两项之后就可以了
 
 ## 6. 网络模块
 
@@ -456,7 +469,7 @@ void loop() {
 
 ### 1. INMP441 麦克风模块
 
-> 量化宽度是 24 位, 但是一个声道的位时间周期是 32,所以 `bit_per_second` 必须是 32 不然要失败的
+> 量化宽度是 24 位, 但是一个声道的位时间周期是 32, 所以 `bit_per_second` 必须是 32 不然要失败的
 >
 >  支持 I2S 的飞利浦格式通信
 
@@ -508,6 +521,8 @@ void list_files_in_littlefs() {
   1. [idf.py 文件的使用](https://www.bilibili.com/video/BV1sH4y1W7Tc?spm_id_from=333.788.player.switch&vd_source=b47817c1aa0db593f452034d53d4273a&p=11)
 
   2. [一键配网原理](https://www.bilibili.com/video/BV1R24y1g7WY/?spm_id_from=333.337.search-card.all.click&vd_source=b47817c1aa0db593f452034d53d4273a)
+  
+  3. [官方 SDK 的 Example](https://github.com/espressif/esp-idf/tree/master/examples)
 
 <br>
 
@@ -608,11 +623,13 @@ void led_breath_task() {
 }
 ```
 
-## 3. UART 配置
+##  UART 配置
 
 ---
 
-### 1. 配置 UART
+- [解析触发 UART 的事件](https://github.com/espressif/esp-idf/tree/master/examples/peripherals/uart/uart_events)
+
+###  配置 UART
 
 > `TTL-USB` 和下面的引脚反接哈
 
@@ -644,7 +661,7 @@ void uart_init() {
 }
 ```
 
-### 2. 发送数据
+### 发送数据
 
 ```c
 void uart_send_data(const char* data) {
@@ -652,7 +669,7 @@ void uart_send_data(const char* data) {
 }
 ```
 
-### 3. 接受数据
+### 接受数据
 
 ```c
 void uart_receive_task(void *arg) {
@@ -738,11 +755,11 @@ void uart_init()
 
 
 
-## 4. FileSystem
+## FileSystem
 
 ---
 
-### 1. ESP FLASH 分区表
+###  ESP FLASH 分区表
 
 > 这章开始之前，我们先对单片的存储空间构成有一个概念，单片机的存储空间主要有两个部分构成 `RAM` + `FLASH`
 >
@@ -782,7 +799,7 @@ RAM（运行时内存）
 
 <br>
 
-### 2. Little Fs
+### Little Fs
 
 > [!important]
 >
@@ -798,7 +815,7 @@ RAM（运行时内存）
 
 
 
-## 5.SmartConfig
+## SmartConfig
 
 ---
 
@@ -806,25 +823,25 @@ RAM（运行时内存）
 >
 > **SmartConfig** 是一种用于将智能设备（如 ESP32 或 ESP8266）连接到 Wi-Fi 网络的简便方法。它通过手机应用程序来传输 Wi-Fi 配置（如 SSID 和密码）到设备，而不需要直接与设备交互。
 
-### 1. SmartConfig 工作原理
+###  SmartConfig 工作原理
 
->  那么对于设备来说，如何知道这个UDP广播包就是SmartConfig发出的呢？
+>  那么对于设备来说，如何知道这个 UDP 广播包就是 SmartConfig 发出的呢？
 
-​	这里涉及到一个**前导码**的概念，当设备WiFi开启混杂模式时，会在所处环境中快速切换各条信道来抓取每个信道中的数据包，当遇到正在发送前导码数据包的信道时，锁定该信道并继续接收广播数据，直到收到足够的数据来解码出其中的WiFi密码然后连接WiFi, 因此前导码一般由几个特殊的字节组成，方便和其他UDP包区分，在发送完成后，APP还会发送3个终止码
+​	这里涉及到一个 **前导码** 的概念，当设备 WiFi 开启混杂模式时，会在所处环境中快速切换各条信道来抓取每个信道中的数据包，当遇到正在发送前导码数据包的信道时，锁定该信道并继续接收广播数据，直到收到足够的数据来解码出其中的 WiFi 密码然后连接 WiFi, 因此前导码一般由几个特殊的字节组成，方便和其他 UDP 包区分，在发送完成后，APP 还会发送 3 个终止码
 
-> 假设手机APP要发送”test”四个字符，算法常量为16，流程如下：
+> 假设手机 APP 要发送”test”四个字符，算法常量为 16，流程如下：
 
-1. APP连续发送3个UDP广播包，数据均为前导码
-2. APP发送1个UDP广播包，IP报文数据长度为’t’-16。
-3. APP发送1个UDP广播包，IP报文数据长度为’e’-16。
-4. APP发送1个UDP广播包，IP报文数据长度为’s’-16。
-5. APP发送1个UDP广播包，IP报文数据长度为’t’-16。
-6. APP连续发送3个UDP广播包，数据均为终止码
-7. APP切换WiFi信道重复上述步骤
+1. APP 连续发送 3 个 UDP 广播包，数据均为前导码
+2. APP 发送 1 个 UDP 广播包，IP 报文数据长度为’t’-16。
+3. APP 发送 1 个 UDP 广播包，IP 报文数据长度为’e’-16。
+4. APP 发送 1 个 UDP 广播包，IP 报文数据长度为’s’-16。
+5. APP 发送 1 个 UDP 广播包，IP 报文数据长度为’t’-16。
+6. APP 连续发送 3 个 UDP 广播包，数据均为终止码
+7. APP 切换 WiFi 信道重复上述步骤
 
 <br>
 
-### 2. SmartConfig 流程
+### SmartConfig 流程
 
 ```mermaid
 graph TD
@@ -841,7 +858,7 @@ graph TD
 
 
 
-## 6. idf 相关使用
+## idf 相关使用
 
 > 使用 esptool.py 查看芯片相关的属性
 >
@@ -853,13 +870,140 @@ graph TD
 esptool.py -p /dev/ttyUSB0 flash_id 
 ```
 
+## PCNT 脉冲计数器
+
+> 这个主要使用在电机编码器计数方向上，由于 ESP32 官方文档翻起来不方便，所以我们还是多记录
+>
+> PCNT 的功能从以下几个方面进行说明：
+>
+> - [分配资源](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32s3/api-reference/peripherals/pcnt.html#pcnt-resource-allocation) - 说明如何通过配置分配 PCNT 单元和通道，以及在相应操作完成之后，如何回收单元和通道。
+> - [设置通道操作](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32s3/api-reference/peripherals/pcnt.html#pcnt-setup-channel-actions) - 说明如何设置通道针对不同信号沿和电平进行操作。
+> - [PCNT 观察点](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32s3/api-reference/peripherals/pcnt.html#pcnt-watch-points) - 说明如何配置观察点，即当计数达到某个数值时，命令 PCNT 单元触发某个事件。
+> - [注册事件回调函数](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32s3/api-reference/peripherals/pcnt.html#pcnt-register-event-callbacks) - 说明如何将您的代码挂载到观察点事件的回调函数上。
+> - [设置毛刺滤波器](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32s3/api-reference/peripherals/pcnt.html#pcnt-set-glitch-filter) - 说明如何使能毛刺滤波器并设置其时序参数。
+> - [使能和禁用单元](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32s3/api-reference/peripherals/pcnt.html#pcnt-enable-disable-unit) - 说明如何使能和关闭 PCNT 单元。
+> - [控制单元 IO 操作](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32s3/api-reference/peripherals/pcnt.html#pcnt-unit-io-control) - 说明 PCNT 单元的 IO 控制功能，例如使能毛刺滤波器，开启和停用 PCNT 单元，获取和清除计数。
+> - [电源管理](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32s3/api-reference/peripherals/pcnt.html#pcnt-power-management) - 说明哪些功能会阻止芯片进入低功耗模式。
+> - [支持 IRAM 安全中断](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32s3/api-reference/peripherals/pcnt.html#pcnt-iram-safe) - 说明在缓存禁用的情况下，如何执行 PCNT 中断和 IO 控制功能。
+> - [支持线程安全](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32s3/api-reference/peripherals/pcnt.html#pcnt-thread-safe) - 列出线程安全的 API。
+> - [支持的 Kconfig 选项](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32s3/api-reference/peripherals/pcnt.html#pcnt-kconfig-options) - 列出了支持的 Kconfig 选项，这些选项可实现不同的驱动效果。
+>
+> 上面是官方枚举的，我这里就记录我实际需要用的情况的代码吧
+
+### 安装 PCNT 单元
+
+> [!note]
+>
+> 安装 PCNT 单元时，需要先完成配置 [`pcnt_unit_config_t`](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32/api-reference/peripherals/pcnt.html#_CPPv418pcnt_unit_config_t)
+
+> - [`pcnt_unit_config_t::low_limit`](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32/api-reference/peripherals/pcnt.html#_CPPv4N18pcnt_unit_config_t9low_limitE) 与 [`pcnt_unit_config_t::high_limit`](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32/api-reference/peripherals/pcnt.html#_CPPv4N18pcnt_unit_config_t10high_limitE) 用于指定内部计数器的最小值和最大值。当计数器超过任一限值时，计数器将归零。这两个，我们可以宏定义来控制
+> - [`pcnt_unit_config_t::intr_priority`](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32/api-reference/peripherals/pcnt.html#_CPPv4N18pcnt_unit_config_t13intr_priorityE) 设置中断的优先级。如果设置为 `0`，则会分配一个默认优先级的中断，否则会使用指定的优先级。
+
+```c
+#define EXAMPLE_PCNT_HIGH_LIMIT 100
+#define EXAMPLE_PCNT_LOW_LIMIT  -100
+
+// 驱动配置
+pcnt_unit_config_t unit_config = {
+    .high_limit = EXAMPLE_PCNT_HIGH_LIMIT,
+    .low_limit = EXAMPLE_PCNT_LOW_LIMIT,
+};
+
+pcnt_unit_handle_t pcnt_unit = NULL;		// pcnt 单元
+ESP_ERROR_CHECK(pcnt_new_unit(&unit_config, &pcnt_unit));	// 给单元设置配置
+```
+
+> 可用的 PCNT 单元总数记录在 [`SOC_PCNT_UNITS_PER_GROUP`](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32/api-reference/system/soc_caps.html#c.SOC_PCNT_UNITS_PER_GROUP) 中
+
+### 安装 PCNT 通道
+
+> [!note]
+>
+> 安装 PCNT 通道时，需要先初始化 [`pcnt_chan_config_t`](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32/api-reference/peripherals/pcnt.html#_CPPv418pcnt_chan_config_t)，然后调用 [`pcnt_new_channel()`](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32/api-reference/peripherals/pcnt.html#_CPPv416pcnt_new_channel18pcnt_unit_handle_tPK18pcnt_chan_config_tP21pcnt_channel_handle_t)
+
+> 对 [`pcnt_chan_config_t`](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32/api-reference/peripherals/pcnt.html#_CPPv418pcnt_chan_config_t) 配置如下所示:
+>
+> - [`pcnt_chan_config_t::edge_gpio_num`](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32/api-reference/peripherals/pcnt.html#_CPPv4N18pcnt_chan_config_t13edge_gpio_numE) 与 [`pcnt_chan_config_t::level_gpio_num`](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32/api-reference/peripherals/pcnt.html#_CPPv4N18pcnt_chan_config_t14level_gpio_numE) 用于指定 **边沿** 信号和 **电平** 信号对应的 GPIO 编号。
+
+```c
+#define EXAMPLE_CHAN_GPIO_A 0
+#define EXAMPLE_CHAN_GPIO_B 2
+
+pcnt_chan_config_t chan_config = {
+    .edge_gpio_num = EXAMPLE_CHAN_GPIO_A,		// 监听 A 相的跳变（上升/下降沿）
+    .level_gpio_num = EXAMPLE_CHAN_GPIO_B,		// 读取 B 相的电平状态
+};
+// * 注册通道
+pcnt_channel_handle_t pcnt_chan = NULL;
+ESP_ERROR_CHECK(pcnt_new_channel(pcnt_unit, &chan_config, &pcnt_chan));
+```
+
+> [!warning]
+>
+> 调用函数 [`pcnt_new_channel()`](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32/api-reference/peripherals/pcnt.html#_CPPv416pcnt_new_channel18pcnt_unit_handle_tPK18pcnt_chan_config_tP21pcnt_channel_handle_t)，将 [`pcnt_chan_config_t`](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32/api-reference/peripherals/pcnt.html#_CPPv418pcnt_chan_config_t) 作为输入值并调用 [`pcnt_new_unit()`](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32/api-reference/peripherals/pcnt.html#_CPPv413pcnt_new_unitPK18pcnt_unit_config_tP18pcnt_unit_handle_t) 返回的 PCNT 单元句柄，可对 PCNT 通道进行分配和初始化。如果该函数正常运行，会返回一个 PCNT 通道句柄。如果没有可用的 PCNT 通道（PCNT 通道资源全部被占用），该函数会返回错误 [`ESP_ERR_NOT_FOUND`](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32/api-reference/system/esp_err.html#c.ESP_ERR_NOT_FOUND)。可用的 PCNT 通道总数记录在 [`SOC_PCNT_CHANNELS_PER_UNIT`](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32/api-reference/system/soc_caps.html#c.SOC_PCNT_CHANNELS_PER_UNIT)，以供参考。注意，为某个单元安装 PCNT 通道时，应确保该单元处于初始状态，否则函数 [`pcnt_new_channel()`](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32/api-reference/peripherals/pcnt.html#_CPPv416pcnt_new_channel18pcnt_unit_handle_tPK18pcnt_chan_config_tP21pcnt_channel_handle_t) 会返回错误 [`ESP_ERR_INVALID_STATE`](https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32/api-reference/system/esp_err.html#c.ESP_ERR_INVALID_STATE)。
+
+### 设置通道操作
+
+> [!note]
+>
+> 当输入脉冲信号切换时，PCNT 通道会增加，减少或停止计数。边沿信号及电平信号可设置为不同的计数器操作。
+
+```c
+// @brief 这里实现的是一个两倍计数
+
+// decrease the counter on rising edge, increase the counter on falling edge
+ESP_ERROR_CHECK(pcnt_channel_set_edge_action(pcnt_chan, 
+                                             PCNT_CHANNEL_EDGE_ACTION_DECREASE, 			
+                                             PCNT_CHANNEL_EDGE_ACTION_INCREASE
+                                            ));
+// keep the counting mode when the control signal is high level, 
+// and reverse the counting mode when the control signal is low level
+ESP_ERROR_CHECK(pcnt_channel_set_level_action(pcnt_chan, 
+                                              PCNT_CHANNEL_LEVEL_ACTION_KEEP, 
+                                              PCNT_CHANNEL_LEVEL_ACTION_INVERSE
+                                             ));
+```
+
+<img src="https://pic4.zhimg.com/v2-1f7334ecc43305850a5520c6d9b2ccc7_1440w.jpg" alt="img" style="zoom:70%;" />
+
+> [!note]
+>
+> 假设某个增量式编码器它的分辨率是 600PPR，能分辨的最小角度是 0.6°，对它进行 4 倍频之后就相当于把分辨率提高到了 600*4 = 2400PPR，此时编码器能够分辨的最小角度为 0.15°
+
+#### 1x mode
+
+> 
+
+```c
+void encoder_mode_1x() {
+
+}
+```
+
+#### 2x mode
+
+```c
+void encoder_mode_2x() {
+
+}
+
+```
+
+#### 4x mode
+
+```c
+void encoder_mode_4x() {
+
+}
+```
+
 <br>
 
 # Esp32 + Vue
 
 ---
 
-## 1. 创建 vue 工程
+##  创建 vue 工程
 
 > 使用这个命令之后, 我们就会创建了一个工程, 会提示你创建文件名之类的东西
 
@@ -867,7 +1011,7 @@ esptool.py -p /dev/ttyUSB0 flash_id
 npm init vue@latest
 ```
 
-## 2. 打包 vue 工程到 esp32
+## 打包 vue 工程到 esp32
 
 > 在 `vite.config.js` 中, 我们先 npm 安装这个插件
 
@@ -925,11 +1069,11 @@ build/www/assets/index-z7OZotLW.js   69.55 kB │ gzip: 27.41 kB
 ✨ [vite-plugin-compression]:algorithm=gzip - compressed file successfully:
 ```
 
-## 3. vue 项目传到 FileSystem 中
+##  vue 项目传到 FileSystem 中
 
 ![image-20250321154328618](https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20250321154328618.png)
 
-> **data 目录**下的内容就会上传到 esp 的内存中
+> **data 目录** 下的内容就会上传到 esp 的内存中
 
 ![image-20250321154406799](https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20250321154406799.png)
 
@@ -941,122 +1085,7 @@ build/www/assets/index-z7OZotLW.js   69.55 kB │ gzip: 27.41 kB
 
 ---
 
-## 1. 工程模板
-
-```cpp
-#include "FreeRTOS.h"
-#include "main.h"
-#include "task.h"
-
-#include <stdio.h>
-#include <strings.h>
-
-#include "queue.h"
-
-#define STACK_TASK_STACK 128
-#define STACK_TASK_PRIORITY 1
-
-
-// region init
-void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
-void start_task(void);
-TaskHandle_t start_task_handler;
-// endregion
-
-
-// region task
-
-/* config for task one */
-#define TASK_ONE_STACK 128
-#define TASK_ONE_PRIORITY 1
-void task_one(void *pvParam);
-TaskHandle_t task_one_handler;
-
-
-/* config for task tow */
-#define TASK_TWO_STACK 128
-#define TASK_TWO_PRIORITY 2
-void task_two(void *pvParam);
-TaskHandle_t task_two_handler;
-
-
-/* config for task three */
-#define TASK_Three_STACK 128
-#define TASK_Three_PRIORITY 2
-void task_three(void *pvParam);
-TaskHandle_t task_three_handler;
-// endregion
-
-
-/* 队列句柄 */
-QueueHandle_t queue1;
-QueueHandle_t big_queue;
-
-/**
- * @brief  FreeRTOS initialization
- * @param  None
- * @retval None
- */
-void MX_FREERTOS_Init(void) {
-    // 创建好队列
-    queue1 = xQueueCreate(2, sizeof(uint8_t));
-    if (queue1 == NULL) {
-        printf("Error creating queue\r\n");
-    } else {
-        printf("Created queue\r\n");
-    }
-    big_queue = xQueueCreate(1, sizeof(char *));
-    if (big_queue == NULL) {
-        printf("Error creating queue\r\n");
-    } else {
-        printf("Created queue\r\n");
-    }
-
-    // 创建一个启动任务
-    xTaskCreate((TaskFunction_t) start_task, (const char *const) "start_task",
-                (configSTACK_DEPTH_TYPE) STACK_TASK_STACK, (void *) NULL,
-                (UBaseType_t) STACK_TASK_PRIORITY, (TaskHandle_t *) &start_task_handler);
-    // 开启任务调度器
-    vTaskStartScheduler();
-}
-
-void start_task(void) {
-    xTaskCreate((TaskFunction_t) task_one, (const char *const) "task_one",
-                (configSTACK_DEPTH_TYPE) TASK_ONE_STACK, (void *) NULL,
-                (UBaseType_t) TASK_ONE_PRIORITY, (TaskHandle_t *) &task_one_handler);
-    xTaskCreate((TaskFunction_t) task_two, (const char *const) "task_two",
-                (configSTACK_DEPTH_TYPE) TASK_TWO_STACK, (void *) NULL,
-                (UBaseType_t) TASK_TWO_PRIORITY, (TaskHandle_t *) &task_two_handler);
-    xTaskCreate((TaskFunction_t) task_three, (const char *const) "task_three",
-                (configSTACK_DEPTH_TYPE) TASK_Three_STACK, (void *) NULL,
-                (UBaseType_t) TASK_Three_PRIORITY, (TaskHandle_t *) &task_three_handler);
-    // 创建任务之后删除多余创建任务这个任务
-    vTaskDelete(NULL);
-}
-
-
-void task_one(void *pvParam) {
-    while (1) {
-        printf("Hello World1\r\n");
-        vTaskDelay(500);
-    }
-}
-void task_two(void *pvParam) {
-    while (1) {
-        printf("Hello World2\r\n");
-        vTaskDelay(500);
-    }
-}
-void task_three(void *pvParam) {
-    while (1) {
-        printf("Hello World3\r\n");
-        vTaskDelay(500);
-    }
-}
-
-```
-
-## 2. 重写的 prinf 输出
+##  重写的 prinf 输出
 
 > 多线程别用, 有 bug 但是可以用 `HAL_USART_Tranmit_IT` 使用中断, 说不定就一直阻塞死了
 
@@ -1067,11 +1096,11 @@ int __io_putchar(int ch) {
 }
 ```
 
-## 3. 挂载 `usb` 设备到 `Linux`
+## 挂载 `usb` 设备到 `Linux`
 
 ---
 
-> 操作 usb 设备的命令需要**管理员权限**哈
+> 操作 usb 设备的命令需要 **管理员权限** 哈
 
 ### 1. 查看需要挂载的设备
 
@@ -1112,16 +1141,16 @@ usbipd.exe attach --wsl -b 1-2
 ![image-20250302123127372](https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20250302123127372.png)
 
 > 在 linux 的外设里面也会多一个这个 usb 设备
+>
+> ```shell
+> ls /dev/ttyUSB*
+> ```
+>
+> ![image-20250302123426115](https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20250302123426115.png)
 
-![image-20250302123426115](https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20250302123426115.png)
+​	**注:** 这个时候 win 是无法访问这个设备的, 所以你想用记得 detach 掉，如果你有 wireshark 抓包 usb 的用途，要注意 usbcap 和这个软件冲突
 
-​	**注:** 这个时候 win 是无法访问这个设备的, 所以你想用记得 detach 掉
-
-## 4. 导入esp 需要的头文件
-
-![image-20250302125559805](https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20250302125559805.png)
-
-## 5. idf.py 烧录的权限问题
+## idf.py 烧录的权限问题
 
 > `Permission denied` 这里就是说权限不够
 
@@ -1135,7 +1164,7 @@ sudo chmod 777 /dev/ttyUSB0
 
 <br>
 
-## 6. 芯片命名
+## ESP32 芯片命名规则
 
 ---
 
@@ -1150,9 +1179,9 @@ ESP32-S3 - N16R8
                PSRAM   Flash
 ```
 
-> 在带有 OSPI PSRAM（即内置芯片为 ESP32-S3-N`?`R8）的模组中，管脚 IO35、IO36、IO37 用于连接至模组内部集成的 OSPI PSRAM，不可用于其他功能。
+> 在带有 OSPI PSRAM（即内置芯片为 ESP32-S3-N `?` R8）的模组中，管脚 IO35、IO36、IO37 用于连接至模组内部集成的 OSPI PSRAM，不可用于其他功能。
 
-## 7. `Arduino` 使用高版本 C++ 特性的方法
+## `Arduino` 使用高版本 C++ 特性的方法
 
 > 使用 pio 下载的 pioArduino 使用的 cpp 版本一般都不会很高，为了使用 CPP 20/23 的特性，我们可以使用下面这个库
 
@@ -1165,4 +1194,119 @@ platform = https://github.com/pioarduino/platform-espressif32/releases/download/
 build_flags = -std=gnu++2b
 build_unflags = -std=gnu++11
 ```
+
+##  `preset` 解决使用不同于默认工具链的问题
+
+> 如果我们的 `.cmake` 文件用的是别的编译器，和我们的默认工具链（Toolchain）不一样就会有下面的这个报错
+
+```shell
+- C compiler GCC used by CMake is not compatible with the configured toolchain Visual Studio. Configure profile…
+- C++ compiler GCC used by CMake is not compatible with the configured toolchain Visual Studio. Configure profile…
+```
+
+> [!note]
+>
+>  那么我们对 `CMakePreset.json` 的这个部分动手脚
+
+```json
+    "configurePresets": [
+        // default
+        {
+            "name": "default",
+            "hidden": true,
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+		    "toolchainFile": "${sourceDir}/cmake/gcc-arm-none-eabi.cmake",
+            "cacheVariables": {
+            },
+            // 在这里指定我们使用的工具链具体是哪一个
+            "vendor": {
+                "jetbrains.com/clion": {
+                    "toolchain": "STM32-GNU-14.3"
+                }
+            }
+        },
+        // Debug
+        {
+            "name": "Debug",
+            "inherits": "default",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        // Release
+        {
+            "name": "Release",
+            "inherits": "default",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        }
+    ],
+```
+
+<br>
+
+## pio 创建项目
+
+```shell
+# 这个是一个 idf 的项目，如果其他框架，framework 修改一下
+platformio project init \
+  --board esp32-s3-devkitc-1 \
+  --project-option="framework=espidf" \
+  --project-option="board_upload.flash_size=16MB" \
+  --project-option="board_build.esp32_psram=enabled" \
+  --project-option="board_build.esp32_psram_size=8MB"
+```
+
+> 然后我们再编译一下，让这个项目初始结构完善
+
+```shell
+pio run
+```
+
+
+
+### 创建工程网络延迟问题
+
+- [解决方法](https://blog.csdn.net/baiice_lee/article/details/137168479)
+
+```ini
+[global]
+user=no
+# 超时时间，可自行调整
+timeout = 6000
+
+# 源地址，这里使用阿里云镜像
+index-url = http://mirrors.aliyun.com/pypi/simple/
+
+# 添加源主机为可信主机
+trusted-host = mirrors.aliyun.com
+
+# 走代理，虽然默认不走
+proxy = http://127.0.0.1:7897
+
+[install]
+trusted-host = mirrors.aliyun.com
+```
+
+### 创建工程后头文件找不到的问题
+
+> 如果你是 Clion 就不会有这个问题，但是 vscode 会有问题
+>
+> 先 ctrl + shift + p，然后输入下面的命令：
+
+```shell
+PlatformIO: Rebuild C/C++ Project Index
+```
+
+> 或者 pio 直接输入下面的命令，也是不错的
+
+```shell
+pio init --ide vscode
+```
+
+### 如果是 wsl 环境，如何下载烧录
+
+> 看 2 部分
 

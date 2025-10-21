@@ -1,66 +1,67 @@
 Language: Cpp
 BasedOnStyle: Google  # Google 风格，更现代化、通用
-IndentWidth: 4
-TabWidth: 4
-UseTab: Never
+IndentWidth: 4        # 缩进宽度为 4 个空格
+TabWidth: 4           # Tab 键宽度为 4 个空格
+UseTab: Never         # 永不使用 Tab，只用空格
 
-AccessModifierOffset: -4
-AlignOperands: true
-AlignTrailingComments: true
-AlignConsecutiveAssignments: true
-AlignConsecutiveDeclarations: true
-AlignConsecutiveMacros: AcrossEmptyLinesAndComments
+AccessModifierOffset: -4  # 访问修饰符（public/private）相对于类缩进减少 4 个空格
+AlignOperands: true                     # 对齐操作数
+AlignTrailingComments: true             # 对齐行尾注释
+AlignConsecutiveAssignments: true       # 对齐连续的赋值语句
+AlignConsecutiveDeclarations: true      # 对齐连续的声明语句
+AlignConsecutiveMacros: AcrossEmptyLinesAndComments  # 跨空行和注释对齐宏定义
 
-AllowShortFunctionsOnASingleLine: Empty # 空函数允许一行写
-AllowShortBlocksOnASingleLine: Empty
-AllowShortIfStatementsOnASingleLine: false
-AllowShortLoopsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: Empty # 只有空函数允许写在一行
+AllowShortBlocksOnASingleLine: Empty    # 只有空代码块允许写在一行
+AllowShortIfStatementsOnASingleLine: false  # if 语句不允许写在一行
+AllowShortLoopsOnASingleLine: true      # 短循环允许写在一行
 
-AlwaysBreakTemplateDeclarations: Yes
-BreakBeforeBraces: Custom
-BraceWrapping:
-  AfterFunction: true
-  AfterClass: true
-  AfterStruct: true
-  AfterEnum: true
-  BeforeElse: true
-  BeforeCatch: true
-  SplitEmptyFunction: true
-  SplitEmptyRecord: true
-  SplitEmptyNamespace: true
+AlwaysBreakTemplateDeclarations: Yes    # 模板声明总是换行
+BreakBeforeBraces: Custom              # 自定义花括号换行规则
+BraceWrapping:                         # 花括号换行配置
+  AfterFunction: true      # 函数后的花括号换行
+  AfterClass: true         # 类后的花括号换行
+  AfterStruct: true        # 结构体后的花括号换行
+  AfterEnum: true          # 枚举后的花括号换行
+  AfterControlStatement: true  # 控制语句（if/while/for）后的花括号换行
+  BeforeElse: true         # else 前的花括号换行
+  BeforeCatch: true        # catch 前的花括号换行
+  SplitEmptyFunction: true     # 空函数的花括号分开放置
+  SplitEmptyRecord: true       # 空记录（类/结构体）的花括号分开放置
+  SplitEmptyNamespace: true    # 空命名空间的花括号分开放置
 
-BreakConstructorInitializers: AfterColon
-ConstructorInitializerAllOnOneLineOrOnePerLine: true
+BreakConstructorInitializers: AfterColon  # 构造函数初始化列表在冒号后换行
+ConstructorInitializerAllOnOneLineOrOnePerLine: true  # 构造函数初始化要么全在一行，要么每个一行
 
-ColumnLimit: 100
-ContinuationIndentWidth: 8
+ColumnLimit: 100          # 每行最大字符数限制为 100
+ContinuationIndentWidth: 8  # 续行缩进宽度为 8 个空格
 
-IncludeBlocks: Preserve
-IncludeCategories:
-  - Regex: '^<.*'
+IncludeBlocks: Preserve   # 保持原有的 include 分组
+IncludeCategories:        # include 文件分类和优先级
+  - Regex: '^<.*'         # 系统头文件 <xxx>，优先级最高
     Priority: 1
     SortPriority: 0
     CaseSensitive: false
-  - Regex: '^"protobuf/.*'
+  - Regex: '^"protobuf/.*'  # protobuf 相关头文件
     Priority: 2
-  - Regex: '^"boost/.*'
+  - Regex: '^"boost/.*'     # boost 库头文件
     Priority: 3
-  - Regex: '^".*'
+  - Regex: '^".*'           # 其他用户头文件 "xxx"
     Priority: 4
-  - Regex: '.*'
+  - Regex: '.*'             # 兜底规则，匹配所有其他情况
     Priority: 5
-IncludeIsMainRegex: '([-_](test|unittest))?$'
-SortIncludes: CaseInsensitive
+IncludeIsMainRegex: '([-_](test|unittest))?$'  # 识别主头文件的正则表达式
+SortIncludes: CaseInsensitive  # 排序 include 时忽略大小写
 
-IndentCaseLabels: true
-NamespaceIndentation: All
+IndentCaseLabels: true    # case 标签缩进
+NamespaceIndentation: All # 命名空间内所有内容都缩进
 
-SpacesInParentheses: false
-SpaceAfterCStyleCast: true
-SpacesInConditionalStatement: false
-SpaceBeforeRangeBasedForLoopColon: true
-SpacesInAngles: false
-SpaceAfterTemplateKeyword: true
+SpacesInParentheses: false           # 圆括号内不加空格
+SpaceAfterCStyleCast: true           # C 风格强制转换后加空格
+SpacesInConditionalStatement: false  # 条件语句圆括号内不加空格
+SpaceBeforeRangeBasedForLoopColon: true  # 基于范围的 for 循环冒号前加空格
+SpacesInAngles: false                # 尖括号内不加空格
+SpaceAfterTemplateKeyword: true      # template 关键字后加空格
 
-InsertNewlineAtEOF: true
-MaxEmptyLinesToKeep: 1
+InsertNewlineAtEOF: true  # 文件末尾插入换行符
+MaxEmptyLinesToKeep: 1    # 最多保留 1 行空行

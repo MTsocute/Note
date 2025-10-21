@@ -50,44 +50,7 @@ dcfc1a5 理解 HandleRead 的机制，并添加了对应的注释
 
 <br>
 
----
 
-##  git 使用 ssh 管理 remote 仓库
-
-> 检查本地的 ssh 是否和 github 端验证
-
-```shell
-ssh -T git@github.com
-```
-
-> [!warning]
->
-> 出现了如下内容说明你的 ssh token 是绑定完成了的，不然的话[看看这篇文章](https://blog.csdn.net/weixin_42310154/article/details/118340458)
-
-```txt
-Hi MTsocute! You've successfully authenticated, but GitHub does not provide shell access.
-```
-
-> 切换我们的登录验证方式为 `ssh` 不然的话默认是 `http` 但是这个方法早就被 ban 了，没法 http 控制仓库
->
-> 我们先看看当前是哪种方式
-
-```shell
-git remote -v
-```
-
-```shell
-origin	https://github.com/MTsocute/Go_Blog.git (fetch)
-origin	https://github.com/MTsocute/Go_Blog.git (push)
-```
-
-> 果然是 http, 那么我们用下面的命令切换到 ssh
-
-```shell
-git remote set-url origin git@github.com:MTsocute/Go_Blog.git
-```
-
-<br>
 
 ## 上传打包的文件并标定 Tag
 
@@ -134,27 +97,160 @@ git remote set-url origin git@github.com:MTsocute/Go_Blog.git
 ### 如何将本地仓库推送至 GitHub 远程仓库
 
 1. 在本地项目根目录初始化 Git（若已初始化，可跳过）：
-	```bash
-	git init
-	```
+  ```bash
+  git init
+  ```
+
 2. 在 GitHub 上创建新仓库，不勾选初始化选项，复制仓库地址（HTTPS 或 SSH）。
+
 3. 添加远程仓库地址：
-	```bash
-	git remote add origin <仓库地址>
-	```
+
+  > [!warning]
+  >
+  > 出现了问题的话，就看看 4.2 部分
+
+  ```bash
+  git remote add origin <仓库地址>
+  ```
+
 4. 将主分支重命名为 main（若已是 main 可跳过）：
-	```bash
-	git branch -M main
-	```
+  ```bash
+  git branch -M main
+  ```
+
 5. 首次推送并设置上游：
-	```bash
-	git add .
-	git commit -m "首次提交"
-	git push -u origin main
-	```
+  ```bash
+  git add .
+  git commit -m "首次提交"
+  git push -u origin main
+  ```
+
 6. 后续更新时，执行：
-	```bash
-	git add .
-	git commit -m "更新说明"
-	git push
-	```
+  ```bash
+  git add .
+  git commit -m "更新说明"
+  git push
+  ```
+
+<br>
+
+###  git 使用 ssh 管理 remote 仓库
+
+> 检查本地的 ssh 是否和 github 端验证
+
+```shell
+ssh -T git@github.com
+```
+
+> [!warning]
+>
+> 出现了如下内容说明你的 ssh token 是绑定完成了的，不然的话[看看这篇文章](https://blog.csdn.net/weixin_42310154/article/details/118340458)
+
+```txt
+Hi MTsocute! You've successfully authenticated, but GitHub does not provide shell access.
+```
+
+> 切换我们的登录验证方式为 `ssh` 不然的话默认是 `http` 但是这个方法早就官方被 ban 了，没法 http 控制仓库
+>
+> 我们先看看当前是哪种方式
+
+```shell
+git remote -v
+```
+
+```shell
+origin	https://github.com/MTsocute/Go_Blog.git (fetch)
+origin	https://github.com/MTsocute/Go_Blog.git (push)
+```
+
+> 果然是 http, 那么我们用下面的命令切换到 ssh，之后，我们就可以通过 git 命令操作仓库了
+
+```shell
+git remote set-url origin git@github.com:MTsocute/Go_Blog.git
+```
+
+### 使用 Github 登录工具登录
+
+> [!note]
+>
+> 这个比起 4.2 方法要更方便，如果采用 http 方法的话，你得确保你有桌面程序不然没法用
+>
+> http 不能用就走 SSL
+
+```bash
+sudo apt update
+sudo apt install gh
+```
+
+<br>
+
+## 如何拉取指定的版本
+---
+
+以 [lvgl/lvgl](https://github.com/lvgl/lvgl) 仓库为例，常见拉取指定版本的方法如下：
+
+### 拉取指定 Tag 版本
+
+### 直接拉取指定分支
+
+1. 克隆仓库并指定分支（如 release/v9.0）：
+  ```bash
+  git clone -b release/v9.0 https://github.com/lvgl/lvgl.git
+  ```
+  > 这样会直接拉取并切换到目标分支，无需再 checkout。
+
+2. 如果已克隆仓库，切换分支：
+  ```bash
+  git fetch origin
+  git checkout release/v9.0
+  ```
+1. 克隆仓库（可选，已有本地仓库可跳过）：
+  ```bash
+  git clone https://github.com/lvgl/lvgl.git
+  cd lvgl
+  ```
+2. 查看所有 tag：
+  ```bash
+  git tag
+  ```
+3. 切换到指定 tag（如 v8.3.0）：
+  ```bash
+  git checkout v8.3.0
+  ```
+  > 此时处于 detached HEAD 状态，仅用于查看或使用该版本代码。
+
+### 拉取指定 commit 版本
+
+1. 查看 commit 历史，找到目标 commit 哈希：
+  ```bash
+  git log --oneline
+  ```
+2. 切换到指定 commit：
+  ```bash
+  git checkout <commit-hash>
+  ```
+  > 例如：`git checkout 1a2b3c4d`
+
+### 拉取指定分支
+
+1. 查看所有分支：
+  ```bash
+  git branch -a
+  ```
+2. 切换到远程分支（如 release/v9.0）：
+  ```bash
+  git checkout origin/release/v9.0
+  ```
+  或新建本地分支跟踪远程分支：
+  ```bash
+  git checkout -b release/v9.0 origin/release/v9.0
+  ```
+
+---
+
+> [!tip]
+> 切换到指定 tag 或 commit 后，属于 detached HEAD 状态，若需开发建议新建分支：
+>
+> ```bash
+> git checkout -b my-feature-branch
+> ```

@@ -1,8 +1,8 @@
-# Xmake
+# XMake
 
 ---
 
-- [官方](https://xmake.io/)
+- [官方网站](https://xmake.io/)
 - [包管理器仓库](https://xmake.microblock.cc/)
 - [官方包管理工具 - Xrepo](https://github.com/xmake-io/xrepo)
 
@@ -41,9 +41,20 @@ $ xrepo install -f "vs_runtime='MD'" zlib
 $ xrepo install -f "regex=true,thread=true" boost
 ```
 
+### 使用一个库
 
+- [包配置相关信息](https://xmake.io/zh/guide/package-management/using-official-packages.html#%E5%8F%AF%E9%80%89%E5%8C%85%E8%AE%BE%E7%BD%AE)
 
+```lua
+add_requires("tbox 1.6.*", "libpng ~1.16", "zlib")
 
+target("test")
+    set_kind("binary")
+    add_files("src/*.c")
+    add_packages("tbox", "libpng", "zlib")
+```
+
+<br>
 
 ## 配置
 
@@ -55,38 +66,39 @@ xmake f --menu		# 图形化配置界面
 # 生成compile_commands.json后，Clion可以使用，但是没法 debug
 ```
 
-### 智能提示 - vscode 插件
+### 智能提示 - vscode
 
-> xmake-vscode will generate `.vscode/compile_commands.json` file, so you need only add it to `.vscode/c_cpp_properties.json` to enable IntelliSense.
->
-> for example (`.vscode/c_cpp_properties.json`):
+> 手动生成 vs 配置
 
 ```bash
-xmake project -k compile_commands
+xmake project -k vsxmake
+xmake project -k compile_commands --lsp=clangd
 ```
+
+> 或者把这个规则，写到 `xmake.lua` 里面，也可以生成配置文件
+
+```lua
+add_rules("plugin.compile_commands.autoupdate", {outputdir = ".vscode"})
+```
+
+> 下载 `clangd` 插件，然后再下载 `LSP` 本体
 
 ```json
-// c_cpp_properties.json
-
-{
-    "configurations": [
-        {
-            "compileCommands": ".vscode/compile_commands.json"
-        }
-    ],
-    "version": 4
-}
+# setting.json 加入下面这一条
+"clangd.arguments": [
+    "--compile-commands-dir=${workspaceFolder}/.vscode",
+    // "--completion-style=detailed",
+    // "--header-insertion=never"
+],
 ```
 
-#### How can I generate c_cpp_properties.json ?
-
-> in VS Code, select C/C++: Edit Configurations (UI) from the Command Palette
+> [!note]
 >
-> [here for more](https://code.visualstudio.com/docs/cpp/configure-intellisense-crosscompilation)
+> 如果代码提示不是最新的，手动使用 `xmake project -k compile_commands --lsp=clangd` 生成的配置文件，并移动到 `.vscode` 文件夹下面，然后通过下面的命令更新一下，启动代码提示
 
-![img](https://camo.githubusercontent.com/a9bfd93def37e6f7c62772964f7632c4a421eca052f09b34e4552f7e77959c00/68747470733a2f2f636f64652e76697375616c73747564696f2e636f6d2f6173736574732f646f63732f6370702f6370702f636f6d6d616e642d70616c657474652e706e67)
+![image-20251013094432664](https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20251013094432664.png)
 
-### Type
+### 包的类型
 
 | Type       | Description            | Output Files                              |
 | :--------- | :--------------------- | :---------------------------------------- |
@@ -96,3 +108,29 @@ xmake project -k compile_commands
 | object     | Object file collection | *.o, *.obj                                |
 | headeronly | Header-only library    | No compilation output                     |
 | phony      | Virtual target         | No output, only for dependency management |
+
+```lua
+add_rules("mode.debug", "mode.release")
+set_languages("c++20")
+
+-- 好处就是可以 debug 也可以生成 release
+add_requires("fmt", {configs = {shared = true}})
+
+add_rules("plugin.compile_commands.autoupdate", {outputdir = ".vscode"})
+
+target("big_little_endian")
+    set_kind("binary")
+    add_files("src/main.cpp")
+    set_encodings("utf-8")		-- fmt 的需求
+    add_packages("fmt")
+```
+
+
+
+### DEBUG
+
+> LLVM debug，[下载地址](https://github.com/llvm/llvm-project/releases/tag/llvmorg-21.1.2)
+>
+> vscode 里面搜插件，然后把这个换成 codelldb
+
+![image-20251003085821723](https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20251003085821723.png)

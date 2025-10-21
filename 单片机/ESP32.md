@@ -14,11 +14,11 @@
 
 <br>
 
-## 1. 基础配置
+## 基础配置
 
 ---
 
-### 1. 配置 `platformIO`
+### 配置 `platformIO`
 
 > Espressif ESP32-S3-DevKitC-1-N8 (8 MB QD, NO PSRAM)
 
@@ -37,11 +37,11 @@ platformio project init \
 
 
 
-### 2. 引脚配置
+### 引脚配置
 
 ![果云 esp32-s3-引脚图](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/%E6%9E%9C%E4%BA%91esp32-s3-%E5%BC%95%E8%84%9A%E5%9B%BE.jpg)
 
-### 3. 上拉和下拉
+### 上拉和下拉
 
 > 所谓的上下拉，就是改变当前 GPIO 的状态是高还是低
 >
@@ -49,7 +49,7 @@ platformio project init \
 
 ![image-20250208200228868](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250208200228868.png)
 
-### 4. pio 自带的串口助手
+### pio 自带的串口助手
 
 > pio 自带的串口模拟器，是一个 `uart` 模拟器，我们可以下面命令打开
 
@@ -68,7 +68,7 @@ monitor_speed = 9600
 monitor_filters = time, default, colorize
 ```
 
-### 5. pio 下载第三方库
+### pio 下载第三方库
 
 > 找到对应的库
 
@@ -82,7 +82,7 @@ monitor_filters = time, default, colorize
 
 ![image-20250211223014884](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250211223014884.png)
 
-### 6. 高位先行
+### 高位先行
 
 > **高位先行**：在发送数据时，首先发送数据的 **最高有效位（MSB）**，然后是 **最低有效位（LSB）**。
 >
@@ -104,9 +104,11 @@ G -> 00000000
 B -> 11111111
 ```
 
-### 7. 推挽模式 & 开漏模式
+### 推挽模式 & 开漏模式
 
-**推挽模式（Push-Pull）**：GPIO 输出低电平时拉低引脚，输出高电平时直接输出高电平。
+> [!note]
+>
+> **推挽模式（Push-Pull）**：GPIO 输出低电平时拉低引脚，输出高电平时直接输出高电平。
 
 > 推挽输出模式就是引脚具有驱动高低电平的能力, 那么 `GPIO_PIN_SET` 是点亮还是熄灭？
 >
@@ -121,7 +123,7 @@ B -> 11111111
 
 
 
-## 2. PWM
+## PWM
 
 ---
 
@@ -413,7 +415,7 @@ void loop() {
 
 ![image-20250212002126175](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250212002126175.png)
 
-## 5. SPI 
+## SPI 
 
 ---
 
@@ -435,11 +437,11 @@ void loop() {
 
 > 在 UserSetup.c 文件中, 选择 **驱动芯片** 和 **配置引脚** 这两项之后就可以了
 
-## 6. 网络模块
+## 网络模块
 
 ---
 
-### 1. WiFi 模块
+###  WiFi 模块
 
 > 第一个模式就是手机常用的那种, 这种电脑最好别用, 不然直接没法上网了
 >
@@ -457,17 +459,17 @@ void loop() {
 | `WiFi.scanNetworks()`        | 扫描周围可用的 Wi-Fi 网络并返回一个整数，表示扫描到的网络数量。可以使用其他函数（如 `WiFi.SSID()`）来获取每个网络的详细信息。 |
 | `WiFi.SSID(networkIndex)`    | 返回指定索引的扫描到的 Wi-Fi 网络的 SSID。                   |
 
-### 2. Http 模块
+### Http 模块
 
 ![image-20250219162956481](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250219162956481.png)
 
 <br>
 
-## 7. I2S
+## I2S
 
 ---
 
-### 1. INMP441 麦克风模块
+### INMP441 麦克风模块
 
 > 量化宽度是 24 位, 但是一个声道的位时间周期是 32, 所以 `bit_per_second` 必须是 32 不然要失败的
 >
@@ -494,11 +496,11 @@ void loop() {
 
 ![image-20250405213856898](https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20250405213856898.png)
 
-## 8. LittleFS
+## LittleFS
 
 ---
 
-### 1. 列出文件系统的所有文件
+### 列出文件系统的所有文件
 
 ```cpp
 void list_files_in_littlefs() {
@@ -522,11 +524,15 @@ void list_files_in_littlefs() {
 
   2. [一键配网原理](https://www.bilibili.com/video/BV1R24y1g7WY/?spm_id_from=333.337.search-card.all.click&vd_source=b47817c1aa0db593f452034d53d4273a)
   
-  3. [官方 SDK 的 Example](https://github.com/espressif/esp-idf/tree/master/examples)
+  3. [expressif-SDK 的 Example](https://github.com/espressif/esp-idf/tree/master/examples)
+  
+  4. [pio 官方对于 idf 的仓库](https://github.com/platformio/platform-espressif32/tree/develop)
+  
+  5. [ESP-IoT-Solution](https://docs.espressif.com/projects/esp-iot-solution/zh_CN/latest/)
 
 <br>
 
-## 1. GPIO 配置
+## GPIO 配置
 
 ```c
 #include "driver/gpio.h"
@@ -564,11 +570,11 @@ void app_main(void)
 gpio_set_level(LED_PIN, led_switch);
 ```
 
-## 2. PWM 配置
+##  PWM 配置
 
 ---
 
-### 1. LEDC 配置时钟和通道
+###  LEDC 配置时钟和通道
 
 ```cpp
 #define LED_PIN GPIO_NUM_17              // 设置 LED 输出引脚
@@ -600,7 +606,7 @@ ledc_channel = (ledc_channel_config_t) {
 ledc_channel_config(&ledc_channel);
 ```
 
-### 2. LEDC 控制 LED 呼吸效果
+### LEDC 控制 LED 呼吸效果
 
 ```c
 // 3. 安装渐变功能
@@ -870,6 +876,8 @@ graph TD
 esptool.py -p /dev/ttyUSB0 flash_id 
 ```
 
+<br>
+
 ## PCNT 脉冲计数器
 
 > 这个主要使用在电机编码器计数方向上，由于 ESP32 官方文档翻起来不方便，所以我们还是多记录
@@ -999,6 +1007,45 @@ void encoder_mode_4x() {
 
 <br>
 
+## USB
+
+- [espressif tiny-usb 官方参考](https://docs.espressif.com/projects/esp-iot-solution/zh_CN/latest/usb/usb_overview/tinyusb_guide.html)
+- [USB 接口类型参考](https://zhuanlan.zhihu.com/p/447595295)
+- [USB2.0 协议参考](https://zhuanlan.zhihu.com/p/683251257)
+- [官方 example](https://github.com/espressif/esp-idf/tree/master/examples/peripherals/usb)
+- [BiliBili 视频介绍](https://www.bilibili.com/video/BV1nyrBYQEfv/?spm_id_from=333.337.search-card.all.click&vd_source=b47817c1aa0db593f452034d53d4273a)
+- [HID example](https://github.com/espressif/esp-idf/tree/master/examples/peripherals/usb/host/hid)
+
+> TinyUSB 是一个开源的嵌入式 USB 主机/设备栈库，主要用于支持小型微控制器上的 USB 功能。它由 Adafruit 开发和维护，旨在提供一个轻量级、跨平台、易于集成的 USB 协议栈。
+>
+> TinyUSB 支持多种 USB 设备类型，包括 `HID（人机接口设备）、MSC（大容量存储）、CDC（通信设备类）、MIDI（音乐设备数字接口）`等，适用于各种嵌入式系统和物联网设备。基于原生的 TinyUSB 封装了以下的组件。
+
+![TinyUSB Components](https://dl.espressif.com/AE/esp-iot-solution/tinyusb_components.png)
+
+- `esp_tinyusb`：支持大多数 USB 类（如 HID、CDC、MSC 等），是最常用的组件。
+- `usb_device_uac`：专门支持 UAC（USB Audio Class），用于音频设备。
+- `usb_device_uvc`：专门支持 UVC（USB Video Class），用于视频设备。
+
+### 不同芯片对协议的支持
+
+![image-20251001170530900](https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20251001170530900.png)
+
+### PC 的主机与设备的机制
+
+> PC端通过USB-Hub连接各种类型的设备 ，对于Hub而言 `intf0 是作为设备与主机通信` ， intf1-intf4做为主机与外接设备通信，从图中可以看出 ， `intf1-intf4 数据最终都是通过 intf0 与PC交互` ， 可以说是intf1-intf4 共用 intf0的带宽 。`USB主机会为连接的设备分配一个7位的设备地址`，后续通信均用此地址区分不同的设备，因此`一个USB主机最多连接 127个设备`
+
+![img](https://pic1.zhimg.com/v2-a101a473924af309b1bd4517844cf228_1440w.jpg)
+
+### **USB 端点**
+
+![img](https://pic3.zhimg.com/v2-858b924f911ea90452e8d90a7049883a_1440w.jpg)
+
+
+
+
+
+<br>
+
 # Esp32 + Vue
 
 ---
@@ -1102,7 +1149,7 @@ int __io_putchar(int ch) {
 
 > 操作 usb 设备的命令需要 **管理员权限** 哈
 
-### 1. 查看需要挂载的设备
+### 查看需要挂载的设备
 
 ```bash
 usbipd.exe list
@@ -1110,7 +1157,7 @@ usbipd.exe list
 
 ![image-20250302122604138](https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20250302122604138.png)
 
-### 2. 在  Linux 端查看现有的 usb
+### 在  Linux 端查看现有的 usb
 
 ```bash
 lsusb
@@ -1118,7 +1165,7 @@ lsusb
 
 ![image-20250302122428885](https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20250302122428885.png)
 
-### 3. 分享我们的设备并挂载到 Linux
+### 分享我们的设备并挂载到 Linux
 
 > 这里的 b 就是 `BAISD` 看看 list 输出表的第一列
 
@@ -1150,19 +1197,7 @@ usbipd.exe attach --wsl -b 1-2
 
 ​	**注:** 这个时候 win 是无法访问这个设备的, 所以你想用记得 detach 掉，如果你有 wireshark 抓包 usb 的用途，要注意 usbcap 和这个软件冲突
 
-## idf.py 烧录的权限问题
 
-> `Permission denied` 这里就是说权限不够
-
-![image-20250302131640484](https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20250302131640484.png)
-
-> 请直接把 `/dev/ttyUSB0` 这个设备文件的权限改成最大就行
-
-```zsh
-sudo chmod 777 /dev/ttyUSB0
-```
-
-<br>
 
 ## ESP32 芯片命名规则
 
@@ -1249,6 +1284,10 @@ build_unflags = -std=gnu++11
 
 ## pio 创建项目
 
+> [!warning]
+>
+> 下面的命令在你创建一个文件夹之后再使用
+
 ```shell
 # 这个是一个 idf 的项目，如果其他框架，framework 修改一下
 platformio project init \
@@ -1258,6 +1297,12 @@ platformio project init \
   --project-option="board_build.esp32_psram=enabled" \
   --project-option="board_build.esp32_psram_size=8MB"
 ```
+
+> [!note]
+>
+> 如何指定 idf 版本
+
+![image-20251001195832748](https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20251001195832748.png)
 
 > 然后我们再编译一下，让这个项目初始结构完善
 
@@ -1310,3 +1355,39 @@ pio init --ide vscode
 
 > 看 2 部分
 
+### 添加第三方库
+
+> 找到 `platformio.ini` 文件，然后写入以下的部分
+
+```ini
+lib_deps =
+	...
+```
+
+### menuconfig
+
+```bash
+pio run -t menuconfig
+```
+
+<br>
+
+## idf 工具的基本使用
+
+---
+
+### 创建项目
+
+### idf.py 烧录的权限问题
+
+> `Permission denied` 这里就是说权限不够
+
+![image-20250302131640484](https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20250302131640484.png)
+
+> 请直接把 `/dev/ttyUSB0` 这个设备文件的权限改成最大就行
+
+```zsh
+sudo chmod 777 /dev/ttyUSB0
+```
+
+<br>

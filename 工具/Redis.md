@@ -237,13 +237,11 @@ replica-read-only yes
 
 ### String 操作
 
----
-
 ![image-20250803191227194](https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20250803191227194.png)
 
 <br>
 
-### 2. Hash 类型的操作
+### Hash 类型的操作
 
 ---
 
@@ -255,7 +253,7 @@ replica-read-only yes
 
 
 
-### 3. List 的操作
+### List 的操作
 
 ---
 
@@ -267,19 +265,94 @@ replica-read-only yes
 
 <br>
 
-### 4. Set 的操作
+### Set 的操作
 
 ---
 
 ![image-20250804134650229](https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20250804134650229.png)
 
-### 5. SortedSet 的操作
+### SortedSet 的操作
 
 ---
 
 ![image-20250804135505850](https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20250804135505850.png)
 
 <br>
+
+## Redis 常用操作命令表
+
+---
+
+| 分类            | 命令                                       | 说明               | 示例                                   |
+| --------------- | ------------------------------------------ | ------------------ | -------------------------------------- |
+| **连接操作**    | `PING`                                     | 测试连接           | `PING`                                 |
+|                 | `AUTH password`                            | 密码认证           | `AUTH mypassword`                      |
+|                 | `SELECT index`                             | 选择数据库         | `SELECT 1`                             |
+|                 | `QUIT`                                     | 关闭连接           | `QUIT`                                 |
+| **键操作**      | `KEYS pattern`                             | 查找键             | `KEYS user:*`                          |
+|                 | `EXISTS key`                               | 检查键是否存在     | `EXISTS mykey`                         |
+|                 | `TYPE key`                                 | 查看键类型         | `TYPE mykey`                           |
+|                 | `TTL key`                                  | 查看过期时间(秒)   | `TTL mykey`                            |
+|                 | `PTTL key`                                 | 查看过期时间(毫秒) | `PTTL mykey`                           |
+|                 | `EXPIRE key seconds`                       | 设置过期时间       | `EXPIRE mykey 300`                     |
+|                 | `PERSIST key`                              | 移除过期时间       | `PERSIST mykey`                        |
+|                 | `DEL key [key ...]`                        | 删除键             | `DEL key1 key2`                        |
+|                 | `RENAME key newkey`                        | 重命名键           | `RENAME oldkey newkey`                 |
+| **String 操作** | `SET key value`                            | 设置值             | `SET name "Redis"`                     |
+|                 | `GET key`                                  | 获取值             | `GET name`                             |
+|                 | `MSET key value [key value ...]`           | 批量设置           | `MSET k1 v1 k2 v2`                     |
+|                 | `MGET key [key ...]`                       | 批量获取           | `MGET k1 k2`                           |
+|                 | `INCR key`                                 | 原子递增           | `INCR counter`                         |
+|                 | `INCRBY key increment`                     | 指定增量           | `INCRBY counter 5`                     |
+|                 | `DECR key`                                 | 原子递减           | `DECR counter`                         |
+|                 | `APPEND key value`                         | 追加字符串         | `APPEND name "DB"`                     |
+|                 | `STRLEN key`                               | 获取长度           | `STRLEN name`                          |
+| **Hash 操作**   | `HSET key field value`                     | 设置字段           | `HSET user:1 name Tom`                 |
+|                 | `HGET key field`                           | 获取字段值         | `HGET user:1 name`                     |
+|                 | `HMSET key field value [field value ...]`  | 批量设置字段       | `HMSET user:1 name Tom age 25`         |
+|                 | `HMGET key field [field ...]`              | 批量获取字段       | `HMGET user:1 name age`                |
+|                 | `HGETALL key`                              | 获取所有字段       | `HGETALL user:1`                       |
+|                 | `HDEL key field [field ...]`               | 删除字段           | `HDEL user:1 age`                      |
+|                 | `HEXISTS key field`                        | 检查字段是否存在   | `HEXISTS user:1 name`                  |
+|                 | `HKEYS key`                                | 获取所有字段名     | `HKEYS user:1`                         |
+|                 | `HVALS key`                                | 获取所有字段值     | `HVALS user:1`                         |
+|                 | `HLEN key`                                 | 获取字段数量       | `HLEN user:1`                          |
+| **List 操作**   | `LPUSH key element [element ...]`          | 左侧插入           | `LPUSH mylist a b c`                   |
+|                 | `RPUSH key element [element ...]`          | 右侧插入           | `RPUSH mylist x y z`                   |
+|                 | `LPOP key`                                 | 左侧弹出           | `LPOP mylist`                          |
+|                 | `RPOP key`                                 | 右侧弹出           | `RPOP mylist`                          |
+|                 | `LRANGE key start stop`                    | 获取范围元素       | `LRANGE mylist 0 -1`                   |
+|                 | `LLEN key`                                 | 获取列表长度       | `LLEN mylist`                          |
+|                 | `LINDEX key index`                         | 获取指定位置元素   | `LINDEX mylist 0`                      |
+|                 | `LSET key index element`                   | 设置指定位置元素   | `LSET mylist 0 newvalue`               |
+|                 | `LTRIM key start stop`                     | 保留指定范围       | `LTRIM mylist 0 2`                     |
+| **Set 操作**    | `SADD key member [member ...]`             | 添加成员           | `SADD myset a b c`                     |
+|                 | `SMEMBERS key`                             | 获取所有成员       | `SMEMBERS myset`                       |
+|                 | `SISMEMBER key member`                     | 检查成员是否存在   | `SISMEMBER myset a`                    |
+|                 | `SCARD key`                                | 获取成员数量       | `SCARD myset`                          |
+|                 | `SREM key member [member ...]`             | 删除成员           | `SREM myset a`                         |
+|                 | `SPOP key [count]`                         | 随机弹出成员       | `SPOP myset 2`                         |
+|                 | `SRANDMEMBER key [count]`                  | 随机获取成员       | `SRANDMEMBER myset 2`                  |
+|                 | `SUNION key [key ...]`                     | 集合并集           | `SUNION set1 set2`                     |
+|                 | `SINTER key [key ...]`                     | 集合交集           | `SINTER set1 set2`                     |
+|                 | `SDIFF key [key ...]`                      | 集合差集           | `SDIFF set1 set2`                      |
+| **ZSet 操作**   | `ZADD key score member [score member ...]` | 添加成员           | `ZADD leaderboard 100 user1`           |
+|                 | `ZRANGE key start stop [WITHSCORES]`       | 按分数升序获取     | `ZRANGE leaderboard 0 -1 WITHSCORES`   |
+|                 | `ZREVRANGE key start stop [WITHSCORES]`    | 按分数降序获取     | `ZREVRANGE leaderboard 0 2 WITHSCORES` |
+|                 | `ZSCORE key member`                        | 获取成员分数       | `ZSCORE leaderboard user1`             |
+|                 | `ZRANK key member`                         | 获取成员排名(升序) | `ZRANK leaderboard user1`              |
+|                 | `ZREVRANK key member`                      | 获取成员排名(降序) | `ZREVRANK leaderboard user1`           |
+|                 | `ZCARD key`                                | 获取成员数量       | `ZCARD leaderboard`                    |
+|                 | `ZREM key member [member ...]`             | 删除成员           | `ZREM leaderboard user1`               |
+|                 | `ZINCRBY key increment member`             | 增加成员分数       | `ZINCRBY leaderboard 10 user1`         |
+| **数据库操作**  | `FLUSHDB`                                  | 清空当前数据库     | `FLUSHDB`                              |
+|                 | `FLUSHALL`                                 | 清空所有数据库     | `FLUSHALL`                             |
+|                 | `DBSIZE`                                   | 获取键数量         | `DBSIZE`                               |
+|                 | `INFO`                                     | 获取服务器信息     | `INFO`                                 |
+|                 | `CONFIG GET parameter`                     | 获取配置           | `CONFIG GET maxmemory`                 |
+|                 | `CONFIG SET parameter value`               | 设置配置           | `CONFIG SET maxmemory 2gb`             |
+
+
 
 ##  Redis 的应用方向
 
@@ -354,7 +427,7 @@ func sendCode(c *gin.Context) {
 
     code := generateCode()
     redisKey := fmt.Sprintf("SMS:LOGIN:CODE:%s", phone)
-    
+
     // 存入 Redis，设置 5 分钟过期
     err := rdb.Set(ctx, redisKey, code, 5*time.Minute).Err()
     if err != nil {
@@ -510,7 +583,7 @@ func genTokenPair(uid uint) (access, refresh string, err error) {
 
     // refresh
     refresh, err = jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-        ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),	    // 7 days 
+        ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),	    // 7 days
     }).SignedString(jwtSecret)
     return access, refresh, err
 }
@@ -703,13 +776,13 @@ func main() {
 >
 > - 说白了就是，redis 这一层失效了，请求全部打到 SQL 了
 
-> [!important] 
+> [!important]
 >
-> 解决方案： 
+> 解决方案：
 >
-> - 给不同的Key的TTL添加随机值 --> 防止一起失效
-> - 利用Redis集群提高服务的可用性 -->针对 Redis 宕机，这种集群哪怕挂了一个也没关系
-> - 给缓存业务添加降级限流策略 --> 服务挂了之后，我们就提供弱一点的服务，限制大流量请求，防止 SQL 也挂了
+> - 给不同的Key的TTL添加随机值--> 防止一起失效
+> - 利用Redis集群提高服务的可用性-->针对 Redis 宕机，这种集群哪怕挂了一个也没关系
+> - 给缓存业务添加降级限流策略--> 服务挂了之后，我们就提供弱一点的服务，限制大流量请求，防止 SQL 也挂了
 > - 给业务添加多级缓存 --> 多缓存策略，失效一层，也不会马上出问题
 
 <br>
@@ -808,7 +881,7 @@ if stock > 0 {
 }
 ```
 
-- 两个线程同时访问的时候，拿到的 `stock` 都是 20 
+- 两个线程同时访问的时候，拿到的 `stock` 都是 20
 
 <br>
 
@@ -887,4 +960,6 @@ func reduceStock(productID int64) error {
 - 解决方案：
   1. 分布式锁
   2. lua 脚本原子操作
+
+<br>
 

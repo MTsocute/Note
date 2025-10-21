@@ -98,3 +98,46 @@ func NewServiceContext(c config.Config) *ServiceContext {
 
 ​	如此一来，统一模块下面的不同 `Handler` 创建的 `Logic` 就可以做到共享了
 
+## gRPC 注册
+
+```protobuf
+syntax = "proto3";
+
+package template;
+
+option go_package = "./template";
+
+service UserService {
+  rpc GetUser (GetUserRequest) returns (GetUserResponse);
+}
+
+message GetUserRequest {
+  string id = 1;
+}
+
+message GetUserResponse {
+  string id = 1;
+  string name = 2;
+}
+
+```
+
+> 生成对应的 go-zero 模块
+
+```bash
+goctl rpc protoc xxx.proto --go_out=./types --go-grpc_out=./types --zrpc_out=. --style go_zero
+```
+
+```bash
+rpc
+├─etc
+├─internal
+│  ├─config
+│  ├─logic
+│  ├─server
+│  └─svc
+├─types
+│  └─user
+└─userservice
+```
+

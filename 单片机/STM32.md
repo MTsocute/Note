@@ -1,4 +1,4 @@
-# `STM 32` 杂项笔记
+# STM 32 杂项笔记
 
 ---
 
@@ -19,7 +19,7 @@
 
 ---
 
-## 1. 烧录文件的配置内容
+## 烧录文件的配置内容
 
 > 烧录文件配置：`stlink.cfg`
 >
@@ -36,11 +36,11 @@ source [find target/stm32f1x.cfg]
 adapter speed 10000
 ```
 
-## 2. `STLink-V2` 的接线图
+## `STLink-V2` 的接线图
 
 ![2-1 工程模板](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/2-1%20%E5%B7%A5%E7%A8%8B%E6%A8%A1%E6%9D%BF.jpg)
 
-## 3. 基本 GIPO Pin 参数的介绍
+## 基本 GIPO Pin 参数的介绍
 
 > 这段代码是STM32中使用HAL库配置GPIO（通用输入输出）引脚的例子
 >
@@ -89,32 +89,13 @@ GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 ```
 
-## 4. PlatformIO 配置
+## STM32 启动模式
 
----
+![image-20251002174402879](https://raw.githubusercontent.com/MTsocute/New_Image/main/img/image-20251002174402879.png)
 
-### 1. `pio` 安装 stm32f103c8 的库
+<br>
 
-> Board: STM32F103C8 (20k RAM, 64k Flash) (Generic)
->
-> 先用 CUBEMX 生成文件再用 PIO
-
-### 2. `ini` 文件配置
-
-```ini
-[env:genericSTM32F103C8]
-platform = ststm32
-board = genericSTM32F103C8
-framework = stm32cube
-upload_protocol = stlink
-debug_tool = stlink
-
-[platformio]
-include_dir = ./Core/Inc
-src_dir = ./Core/Src
-```
-
-## 3.GPIO 脚针的 PIN 口的定义
+## GPIO 脚针的 PIN `口的定义`
 
 ```cpp
 // 0000 0000 0000 0001
@@ -138,11 +119,15 @@ src_dir = ./Core/Src
 #define GPIO_PIN_All               ((uint16_t)0xFFFF)  /* All pins selected */
 ```
 
-## 6. Debug 文件配置
+## Debug 文件配置
 
 ![image-20241206180242134](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241206180242134.png)
 
-## 8. `OLED` 时 `GPIO` 的配置
+# 2. HAL 设置
+
+---
+
+##  `OLED` 时 `GPIO` 的配置
 
 ```c
 /*Configure GPIO pins : SCL_Pin SDA_Pin */
@@ -153,7 +138,7 @@ GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 ```
 
-## 9. `TIM` 内部中断配置介绍
+## `TIM` 内部中断配置介绍
 
 ![image-20250221171858866](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250221171858866.png)
 
@@ -197,7 +182,7 @@ htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 
 ![image-20250221171933230](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250221171933230.png)
 
-## 10. 外部 TIM 配置
+## 外部 TIM 配置
 
 > 首先需要打开外部时钟的配置
 
@@ -209,7 +194,7 @@ htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 
 ![image-20241213165636780](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241213165636780.png)
 
-## 11. PWM 配置
+## PWM 配置
 
 > 使用内部时钟来生成 `PWM` 波
 >
@@ -237,9 +222,9 @@ htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
     - 设置为 `High` 时，当比较结果为 1 时，输出高电平，结果为 0 时，输出低电平
     - 设置为 `Low` 时则输出电平反一反
 
-## 12. IC 模式配置
+## IC 模式配置
 
-> 我们这里使用 TIM 3 来捕获外部输入(IC)
+> 我们这里使用 TIM 3 来捕获外部输入 (`input Capture`)
 >
 > 顺带一提 IO 复用表，我们使用 Channel 1，也就是 PA6，捕获上升沿
 
@@ -271,11 +256,11 @@ htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 
 <br>
 
-## 13. AD 转换
+##  AD 转换
 
 ---
 
-### 1. 引脚的配置
+###  引脚的配置
 
 ![image-20241228164159722](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241228164159722.png)
 
@@ -291,7 +276,7 @@ htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 
 ![image-20241228165147384](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241228165147384.png)
 
-### 2. 时钟频率的设置
+### 时钟频率的设置
 
 > ![image-20241228165425521](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20241228165425521.png)
 
@@ -299,9 +284,11 @@ htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 
 > 所以我们需要分频器，让我们的频率 < 14 MHz
 
-## 14. DMA 配置
+<br>
 
-### 1. M2M
+##  DMA 配置
+
+### M2M
 
 > 内存和内存之间的传递数据
 
@@ -325,7 +312,7 @@ htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 
 
 
-## 15. USART 配置
+## USART 配置
 
 > `Parity` 的意思是校验码
 >
@@ -335,7 +322,7 @@ htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 
 ![image-20250104183845273](https://cdn.jsdelivr.net/gh/MTsocute/New_Image@main/img/image-20250104183845273.png)
 
-# 2. HAL 库函数
+# 3. HAL 库函数
 
 ---
 
@@ -828,13 +815,13 @@ int __io_putchar(int ch) {
 }
 ```
 
-# 3. 硬件编码原理
+# 4. HAL 配置的原理
 
 ---
 
 > 这里提供主要的驱动模块，而是每一个驱动的编写原理
 
-## 3.1 PWM 波形
+## PWM 波形
 
 > 看最右边的图，一个周期的时间就是： $T_S = T_{ON} + T_{OFF}$，就是这个周期中控制 `ON` 和 `OFF` 所占时间的多少
 >

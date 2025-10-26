@@ -68,6 +68,14 @@ xmake f --menu		# 图形化配置界面
 
 ### 智能提示 - vscode
 
+> `vscode` 自动配置
+
+```bash
+XMake:Configure 
+```
+
+<br>
+
 > 手动生成 vs 配置
 
 ```bash
@@ -109,12 +117,14 @@ add_rules("plugin.compile_commands.autoupdate", {outputdir = ".vscode"})
 | headeronly | Header-only library    | No compilation output                     |
 | phony      | Virtual target         | No output, only for dependency management |
 
+<br>
+
 ```lua
 add_rules("mode.debug", "mode.release")
 set_languages("c++20")
 
 -- 好处就是可以 debug 也可以生成 release
-add_requires("fmt", {configs = {shared = true}})
+add_requires("fmt", {configs = {debug = is_mode("debug")}})
 
 add_rules("plugin.compile_commands.autoupdate", {outputdir = ".vscode"})
 
@@ -124,8 +134,6 @@ target("big_little_endian")
     set_encodings("utf-8")		-- fmt 的需求
     add_packages("fmt")
 ```
-
-
 
 ### DEBUG
 

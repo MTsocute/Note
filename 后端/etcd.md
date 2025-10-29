@@ -55,4 +55,3 @@ volumes:
 - [go-zero 注册 etcd](https://go-zero.dev/docs/tutorials/grpc/server/example#1-%E5%88%9B%E5%BB%BA%E6%9C%8D%E5%8A%A1%E7%9B%AE%E5%BD%95%E5%88%9D%E5%A7%8B%E5%8C%96-go-module-%E5%B7%A5%E7%A8%8B)
 - [视频解说](https://www.bilibili.com/video/BV12x4uecE5Y?spm_id_from=333.788.videopod.sections&vd_source=b47817c1aa0db593f452034d53d4273a)
 
-> 去看下我的 github 仓库，那里比较详细
